@@ -17,14 +17,16 @@ module Gullah
       return unless adequate? parse, ignore_pending: false
 
       @bin << parse
-      if @filters.any? && (@count == @batch)
-        @count + +
-        filter
-      end
+      @count += 1
+      filter if @filters.any? && (@count == @batch)
     end
 
     def dump
-      filter if @count.positive? && @filters.any?
+      if @count.positive? && @filters.any?
+        filter
+      else
+        @bin.uniq!(&:summary)
+      end
       @bin
     end
 
@@ -77,10 +79,8 @@ module Gullah
         @thresholds[f] = limit
         @bin = candidates.reject { |_p, l| l > limit }.map(&:first)
       end
-      set_thresholds
+      @bin.uniq!(&:summary)
       @count = 0
     end
-
-    def set_thresholds; end
   end
 end

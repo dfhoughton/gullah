@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# a non-terminal grammatical rule
+# something to identify Gullah errors
 module Gullah
-  class Error < StandardError
+  class Error < ::StandardError
   end
 end

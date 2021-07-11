@@ -1,18 +1,14 @@
 # frozen_string_literal: true
 
-# a minimal rule fragment; this is where the actual matching occurs 
+# a minimal rule fragment; this is where the actual matching occurs
 module Gullah
   class Atom
-    attr_reader :seeking # the type of node sought
-    attr_reader :min_repeats
-    attr_reader :max_repeats
-    attr_reader :parent
-    attr_reader :next
+    attr_reader :seeking, :min_repeats, :max_repeats, :parent, :next # the type of node sought
 
     def initialize(atom, parent)
       @parent = parent
-      rule, suffix = /\A([a-zA-Z_]+)([?+!]|\{\d+(?:,\d*)?\})\z/.match(atom)&.captures
-      raise Gullah::Error.new("cannot parse #{atom}") unless rule
+      rule, suffix = /\A([a-zA-Z_]+)([?*+!]|\{\d+(?:,\d*)?\})?\z/.match(atom)&.captures
+      raise Error, "cannot parse #{atom}" unless rule
 
       @seeking = rule.to_sym
 
@@ -34,9 +30,8 @@ module Gullah
           if comma
             if max
               max = max.to_i
-              if max < min
-                raise Gullah::Error.new("cannot parse #{atom}: #{min} is greater than #{max}")
-              end
+              raise Error, "cannot parse #{atom}: #{min} is greater than #{max}" if max < min
+
               @max_repeats = max
             else
               @max_repeats = Float::INFINITY
@@ -52,7 +47,7 @@ module Gullah
 
     # whether this atom must match at least once
     def required?
-      min_repeats > 0
+      min_repeats.positive?
     end
 
     # returns the new offset, or nil if the atom doesn't match
@@ -60,25 +55,25 @@ module Gullah
       return nil if offset >= nodes.length
 
       count = 0
-      nodes[offset..].each_with_index do |n,i|
+      nodes[offset...nodes.length].each_with_index do |n, i|
         next if n.ignorable?
 
-        return returnable(nodes, i + offset) if i == max_repeats
+        return returnable(nodes, i + offset + 1) if count == max_repeats
 
         if !n.failed_test && n.name == seeking
-          count++
-          return returnable(nodes, i + offset) if count == max_repeats
+          count += 1
+          return returnable(nodes, i + offset + 1) if count == max_repeats
 
           next
         end
 
         if count >= min_repeats
-          return returnable(nodes, i + offset - 1)
+          return returnable(nodes, i + offset)
         else
           return nil
         end
       end
-      return returnable(nodes, nodes.length) # all nodes were consumed
+      count < min_repeats ? nil : returnable(nodes, nodes.length) # all nodes were consumed
     end
 
     private

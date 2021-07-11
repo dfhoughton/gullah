@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-module Gullah
+%w[version atom error hopper leaf node parse rule].each { |s| require "gullah/#{s}" }
 
+module Gullah
   # create a rule in an extending class
   #
   # rule :noun, "det n_bar"
@@ -9,10 +10,7 @@ module Gullah
     init
     init_check(name)
     name = name.to_sym
-    @any_parent_tests ||= !parent_test.nil?
-    raise Error, "#{name} is already a leaf; it cannot be a rule" unless validate(name)
-
-    r = Rule.new name, body, self, tests: tests
+    r = Rule.new name, body, tests: tests
     @rules << r
     r.starters.each do |r, n|
       (@starters[r] ||= []) << n
@@ -24,9 +22,7 @@ module Gullah
     init
     init_check(name)
     name = name.to_sym
-    raise Error, "#{name} is already a rule; it cannot be a leaf" unless validate(name, is_rule: false)
-
-    @leaves << Leaf.new name, rx, ignorable: ignorable, tests: tests
+    @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
   end
 
   def parse(text, filters: %i[correctness completion pending size], batch: 10)
@@ -35,17 +31,17 @@ module Gullah
     hopper = Hopper.new(filters, batch)
     while (parse = bases.pop) # use stack for depth-first parsing
       next unless hopper.adequate?(parse)
+
       any_found = false
       parse.nodes.each_with_index do |n, i|
         next unless (rules = @starters[n.name])
 
         rules.each do |a|
-          if (offset = a.match(parse.nodes, i))
+          next unless (offset = a.match(parse.nodes, i))
+
+          if (p = parse.add(i, offset, a.parent, @do_unary_branch_check))
             any_found = true
-            parse = parse.add(i, offset, a.parent, @do_unary_branch_check)
-            if hopper.adequate?(parse)
-              bases.push parse
-            end
+            bases.push p if hopper.adequate?(p)
           end
         end
       end
@@ -58,6 +54,7 @@ module Gullah
 
   def init
     return if @rules
+
     @rules = []
     @leaves = []
     @starters = {}
@@ -69,14 +66,14 @@ module Gullah
   # do some sanity checking and initialization
   def commit
     return if @committed
-    raise Error, "#{name} has no rules" if @rules.empty?
     raise Error, "#{name} has no leaves" if @leaves.empty?
+
     # vet on commit so rule definition is order-independent
     [@leaves, @rules].flatten.each do |r|
       vetted_tests = r.tests.map { |t| vet t }
-      r.instance_variable_set :@tests vetted_tests
+      r.instance_variable_set :@tests, vetted_tests
+      r.post_init
     end
-    @any_parent_tests = @tests.values.any?{ |m| m.arity == 2 }
     loop_check
     @committed = true
   end
@@ -87,18 +84,18 @@ module Gullah
     links = @rules.select(&:potentially_unary?).flat_map(&:branches).uniq
     if links.any?
       potential_loops = links.map { |l| LoopCheck.new l }
-      while potential_loops.any? do
-        new_potential_loops = []
-        links.each do |l|
-          potential_loops.each do |pl|
-            if (npl = pl.add(l))
-              new_potential_loops << npl
+      catch :looped do
+        while potential_loops.any?
+          new_potential_loops = []
+          links.each do |l|
+            potential_loops.each do |pl|
+              if (npl = pl.add(l, self))
+                new_potential_loops << npl
+              end
             end
           end
+          potential_loops = new_potential_loops
         end
-        potential_loops = new_potential_loops
-      catch :looped
-        @do_unary_branch_check = true
       end
     end
   end
@@ -108,18 +105,20 @@ module Gullah
       @seen = Set.new(link)
       @seeking = link.last
     end
-    def add(link)
-      if seeking == link.first
-        throw :looped if @seen.include? link.last
+
+    def add(link, grammar)
+      if @seeking == link.first
+        if @seen.include? link.last
+          grammar.instance_variable_set :@do_unary_branch_check, true
+          throw :looped
+        end
         LoopCheck.new(@seen.to_a + [link.last])
       end
     end
   end
 
   def init_check(name)
-    if @initialized
-      raise Gullah::Error.new("cannot define #{name}; all rules must be defined before parsing")
-    end
+    raise Gullah::Error, "cannot define #{name}; all rules must be defined before parsing" if @initialized
   end
 
   # convert raw text into one or more strings of leaf nodes
@@ -135,44 +134,34 @@ module Gullah
 
         added_any = true
         e = md.end(0)
-        new_parse = parse.add(offset, e, leaf)
+        new_parse = parse.add(offset, e, leaf, @do_unary_branch_check)
         if e == text.length
           done << new_parse
         else
           bases << [e, new_parse]
         end
       end
-      unless added_any
-        # try to eliminate trash
-        trash_offset = text.length
-        @leaves.each do |leaf|
-          if (md = leaf.rx.match(text, offset)) && (md.begin(0) < trash_offset)
-            trash_offset = md.begin(0)
-          end
-        end
-        new_parse = parse.add(offset, e, trash_rule)
-        if trash_offset == text.length
-          done << new_parse
-        else
-          bases << [trash_offset, new_parse]
+      next if added_any
+
+      # try to eliminate trash
+      trash_offset = text.length
+      @leaves.each do |leaf|
+        if (md = leaf.rx.match(text, offset)) && (md.begin(0) < trash_offset)
+          trash_offset = md.begin(0)
         end
       end
+      new_parse = parse.add(offset, trash_offset, trash_rule, @do_unary_branch_check)
+      if trash_offset == text.length
+        done << new_parse
+      else
+        bases << [trash_offset, new_parse]
+      end
     end
+    done
   end
 
   def trash_rule
-    @trash_rule ||= Rule.new(:"?", nil)
-  end
-
-  def validate(name, is_rule: true)
-    @rules ||= Set.new
-    @leaves ||= Set.new
-    if (is_rule ? @leaves : @rules).include?(name)
-      false
-    else
-      (is_rule ? @rules : @leaves) << name
-      true
-    end
+    @trash_rule ||= Leaf.new(:"?", nil, ignorable: true)
   end
 
   def singleton
@@ -185,15 +174,13 @@ module Gullah
       m = singleton.method(test)
       case m&.arity
       when nil
-        raise Error.new("#{test} is not defined")
+        raise Error, "#{test} is not defined"
       when 1, 2
         # acceptable
       else
-        raise Error.new("#{test} must take either 1 or two arguments")
+        raise Error, "#{test} must take either 1 or two arguments"
       end
-      m 
+      m
     end
   end
 end
-
-%w[ atom error hopper leaf node parse rule ].each { |s| require "gullah/#{s}" }

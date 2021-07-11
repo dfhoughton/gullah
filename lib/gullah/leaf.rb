@@ -9,6 +9,10 @@ module Gullah
       @name = name
       @rx = rx
       @ignorable = ignorable
+      @tests = tests
+    end
+
+    def post_init
       @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end
   end

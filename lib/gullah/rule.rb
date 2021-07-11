@@ -8,24 +8,28 @@ module Gullah
     # tests -- tests that must be run after a match to determine whether the node is a keeper
     # ancestor_tests -- tests that must be run after an ancestor match
     # subrules/atoms -- if you have no subrules, you have a sequence of atoms
-    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms
+    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms, :next
 
     def initialize(name, body, tests: [])
       @name = name
-      @body = body.trim.gsub(/\s+/, ' ')
-      @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
+      @body = body.to_s.strip.gsub(/\s+/, ' ')
+      @tests = tests
       if body =~ /\|/
         @subrules = @body.split(/ ?\| ?/).map do |subrule|
-          Rule.new(name, subrule, test: test, parent_test: parent_test)
+          Rule.new(name, subrule, tests: tests)
         end
       else
-        @atoms = body.split(/ /).map do |a|
+        @atoms = @body.split(/ /).map do |a|
           Atom.new(a, self)
         end
         @atoms.each_with_index do |a, i|
-          a.next = @atoms[i + 1]
+          a.instance_variable_set :@next, @atoms[i + 1]
         end
       end
+    end
+
+    def post_init
+      @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end
 
     # the subrules that may start a match and their atoms
