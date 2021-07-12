@@ -56,7 +56,7 @@ module Gullah
 
     # does this node represent a character sequence no leaf rule matched?
     def trash?
-      name == :"?"
+      false
     end
 
     # does this node's subtree contain unsatisfied syntactic requirements?

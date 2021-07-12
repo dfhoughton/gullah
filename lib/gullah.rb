@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-%w[version atom error hopper leaf node parse rule].each { |s| require "gullah/#{s}" }
+%w[version atom error hopper leaf node trash parse rule].each { |s| require "gullah/#{s}" }
 
 module Gullah
   # create a rule in an extending class
@@ -150,7 +150,7 @@ module Gullah
           trash_offset = md.begin(0)
         end
       end
-      new_parse = parse.add(offset, trash_offset, trash_rule, @do_unary_branch_check)
+      new_parse = parse.add(offset, trash_offset, trash_rule, false, true)
       if trash_offset == text.length
         done << new_parse
       else
@@ -161,7 +161,7 @@ module Gullah
   end
 
   def trash_rule
-    @trash_rule ||= Leaf.new(:"?", nil, ignorable: true)
+    @trash_rule ||= Leaf.new(:"", nil, ignorable: true)
   end
 
   def singleton
