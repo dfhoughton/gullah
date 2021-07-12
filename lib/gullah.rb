@@ -80,8 +80,8 @@ module Gullah
       r.post_init
     end
     loop_check
-    remove_instance_variable :@leaf_dup_check
-    remove_instance_variable :@rule_dup_check
+    remove_instance_variable :@leaf_dup_check if @leaf_dup_check
+    remove_instance_variable :@rule_dup_check if @rule_dup_check
     @committed = true
   end
 

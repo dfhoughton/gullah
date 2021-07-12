@@ -12,13 +12,14 @@ module Gullah
 
     def initialize(name, body, tests: [])
       @name = name
+      @body = body
       @tests = tests
       if body =~ /\|/
-        @subrules = @body.split(/ ?\| ?/).map do |subrule|
+        @subrules = body.split(/ ?\| ?/).map do |subrule|
           Rule.new(name, subrule, tests: tests)
         end
       else
-        @atoms = @body.split(/ /).map do |a|
+        @atoms = body.split(/ /).map do |a|
           Atom.new(a, self)
         end
         @atoms.each_with_index do |a, i|
