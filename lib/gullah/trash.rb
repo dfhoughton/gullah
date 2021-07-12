@@ -3,7 +3,6 @@
 # a node just for trash
 module Gullah
   class Trash < Node
-
     def initialize(*args)
       super
       # redundant, but maybe helpful in debugging
@@ -14,6 +13,5 @@ module Gullah
     def trash?
       true
     end
-
   end
 end

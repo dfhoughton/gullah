@@ -12,7 +12,6 @@ module Gullah
 
     def initialize(name, body, tests: [])
       @name = name
-      @body = body.to_s.strip.gsub(/\s+/, ' ')
       @tests = tests
       if body =~ /\|/
         @subrules = @body.split(/ ?\| ?/).map do |subrule|

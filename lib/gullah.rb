@@ -10,6 +10,9 @@ module Gullah
     init
     init_check(name)
     name = name.to_sym
+    body = body.to_s.strip.gsub(/\s+/, ' ')
+    return if dup_check(:rule, name, body, tests)
+
     r = Rule.new name, body, tests: tests
     @rules << r
     r.starters.each do |r, n|
@@ -22,6 +25,8 @@ module Gullah
     init
     init_check(name)
     name = name.to_sym
+    return if dup_check(:leaf, name, rx, tests)
+
     @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
   end
 
@@ -75,6 +80,8 @@ module Gullah
       r.post_init
     end
     loop_check
+    remove_instance_variable :@leaf_dup_check
+    remove_instance_variable :@rule_dup_check
     @committed = true
   end
 
@@ -118,7 +125,7 @@ module Gullah
   end
 
   def init_check(name)
-    raise Gullah::Error, "cannot define #{name}; all rules must be defined before parsing" if @initialized
+    raise Error, "cannot define #{name}; all rules must be defined before parsing" if @initialized
   end
 
   # convert raw text into one or more strings of leaf nodes
@@ -166,6 +173,24 @@ module Gullah
 
   def singleton
     @singleton ||= new
+  end
+
+  # check for duplicate rule/leaf
+  # return true if perfect duplicate, false if unseen
+  # raise error if (type, name, body) have been seen but with different tests
+  def dup_check(type, name, body, tests)
+    hash = type == :leaf ? (@leaf_dup_check ||= {}) : (@rule_dup_check ||= {})
+    key = [name, body]
+    if (old = hash[key])
+      return true if old = tests.sort
+
+      raise Error, <<~MSG
+        attempt to redefine #{type} #{name} with same body but different tests
+      MSG
+    else
+      hash[key] = tests.sort
+      false
+    end
   end
 
   # vet tests
