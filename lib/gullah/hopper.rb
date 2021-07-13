@@ -11,6 +11,8 @@ module Gullah
       @count = 0
       @thresholds = {}
       @bin = []
+      dross = filters - %i[completion correctness size pending]
+      raise Error, "unknown filters: #{dross.join ', '}" if dross.any?
     end
 
     def <<(parse)
@@ -72,8 +74,6 @@ module Gullah
         when :pending
           # find the parses with the fewest pending ancestor tests
           candidates = @bin.map { |p| [p, p.nodes.select(&:pending_tests?).count] }
-        else
-          raise Gullah::Error, "unknown filter: #{f}"
         end
         limit = candidates.map(&:last).min
         @thresholds[f] = limit

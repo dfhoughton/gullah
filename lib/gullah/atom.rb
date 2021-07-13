@@ -1,13 +1,24 @@
 # frozen_string_literal: true
 
-# a minimal rule fragment; this is where the actual matching occurs
 module Gullah
+  # a minimal rule fragment; this is where the actual matching occurs
   class Atom
     attr_reader :seeking, :min_repeats, :max_repeats, :parent, :next # the type of node sought
 
     def initialize(atom, parent)
       @parent = parent
-      rule, suffix = /\A([a-zA-Z_]+)([?*+!]|\{\d+(?:,\d*)?\})?\z/.match(atom)&.captures
+      rule, suffix =
+        /\A
+          (
+            (?:[a-zA-Z_]|\\.)(?:\w|\\.)* # decent identifier, maybe with escaped bits
+            |
+            "(?:[^"\\]|\\.)+"        # double-quoted string, maybe with escaped characters
+            |
+            '(?:[^'\\]|\\.)+''       # single-quoted string, maybe with escaped characters
+          )
+          ([?*+!]|\{\d+(?:,\d*)?\})? # optional repetition suffix
+        \z/x
+        .match(atom)&.captures
       raise Error, "cannot parse #{atom}" unless rule
 
       @seeking = rule.to_sym
@@ -67,11 +78,7 @@ module Gullah
           next
         end
 
-        if count >= min_repeats
-          return returnable(nodes, i + offset)
-        else
-          return nil
-        end
+        return count >= min_repeats ? returnable(nodes, i + offset) : nil
       end
       count < min_repeats ? nil : returnable(nodes, nodes.length) # all nodes were consumed
     end

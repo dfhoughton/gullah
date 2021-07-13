@@ -64,5 +64,14 @@ module Gullah
         atoms.map { |a| [a.seeking, name] }
       end
     end
+
+    # collect all the different rules some atom of this rule might match
+    def seeking
+      if subrules
+        subrules.flat_map(&:seeking).uniq
+      else
+        atoms.map(&:seeking).uniq
+      end
+    end
   end
 end

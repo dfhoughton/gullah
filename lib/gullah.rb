@@ -71,7 +71,7 @@ module Gullah
   # do some sanity checking and initialization
   def commit
     return if @committed
-    raise Error, "#{name} has no leaves" if @leaves.empty?
+    raise Error, "#{name} has no leaves" unless @leaves&.any?
 
     # vet on commit so rule definition is order-independent
     [@leaves, @rules].flatten.each do |r|
@@ -79,10 +79,19 @@ module Gullah
       r.instance_variable_set :@tests, vetted_tests
       r.post_init
     end
+    completeness_check
     loop_check
     remove_instance_variable :@leaf_dup_check if @leaf_dup_check
     remove_instance_variable :@rule_dup_check if @rule_dup_check
     @committed = true
+  end
+
+  # has every rule/leaf required by some rule been defined?
+  def completeness_check
+    available = (@rules + @leaves).map(&:name).to_set
+    sought = @rules.flat_map(&:seeking).uniq.to_set
+    problems = sought.reject { |s| available.include? s }
+    raise Error, "the following rules or leaves remain undefined: #{problems.join(', ')}" if problems.any?
   end
 
   # define the @do_unary_branch_check variable
@@ -125,7 +134,7 @@ module Gullah
   end
 
   def init_check(name)
-    raise Error, "cannot define #{name}; all rules must be defined before parsing" if @initialized
+    raise Error, "cannot define #{name}; all rules must be defined before parsing" if @committed
   end
 
   # convert raw text into one or more strings of leaf nodes
@@ -176,19 +185,14 @@ module Gullah
   end
 
   # check for duplicate rule/leaf
-  # return true if perfect duplicate, false if unseen
-  # raise error if (type, name, body) have been seen but with different tests
+  # return true if perfect duplicate, false if novel
   def dup_check(type, name, body, tests)
-    hash = type == :leaf ? (@leaf_dup_check ||= {}) : (@rule_dup_check ||= {})
-    key = [name, body]
-    if (old = hash[key])
-      return true if old = tests.sort
-
-      raise Error, <<~MSG
-        attempt to redefine #{type} #{name} with same body but different tests
-      MSG
+    set = type == :leaf ? (@leaf_dup_check ||= Set.new) : (@rule_dup_check ||= Set.new)
+    key = [name, body, tests.sort]
+    if set.include? key
+      true
     else
-      hash[key] = tests.sort
+      set << key
       false
     end
   end
@@ -196,15 +200,13 @@ module Gullah
   # vet tests
   def vet(test)
     @tests[test] ||= begin
-      m = singleton.method(test)
-      case m&.arity
-      when nil
+      begin
+        m = singleton.method(test)
+      rescue ::NameError
         raise Error, "#{test} is not defined"
-      when 1, 2
-        # acceptable
-      else
-        raise Error, "#{test} must take either 1 or two arguments"
       end
+      raise Error, "#{test} must take either 1 or two arguments" unless (1..2).include? m.arity
+
       m
     end
   end
