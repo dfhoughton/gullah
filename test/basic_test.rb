@@ -12,7 +12,6 @@ class BasicTest < Minitest::Test
     rule :a, 'a+'
 
     leaf :a, /\S+/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_basic
@@ -33,7 +32,6 @@ class BasicTest < Minitest::Test
     rule :a, 'a{2}'
 
     leaf :a, /\S+/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_fixed_count
@@ -55,7 +53,6 @@ class BasicTest < Minitest::Test
     rule :a, 'a{2}', tests: %i[balanced]
 
     leaf :a, /\S+/
-    leaf :ws, /\s+/, ignorable: true
 
     # we only want a perfectly symmetrical tree
     def balanced(n)
@@ -76,6 +73,8 @@ class BasicTest < Minitest::Test
 
   class Trash
     extend Gullah
+
+    keep_whitespace
 
     leaf :word, /\w+/
     leaf :ws, /\s+/, ignorable: true
@@ -137,7 +136,6 @@ class BasicTest < Minitest::Test
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_subrules
@@ -160,14 +158,13 @@ class BasicTest < Minitest::Test
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
-    leaf :ws, /\s+/, ignorable: true
 
     def foo(n)
       :pass
     end
   end
 
-  def test_subrules
+  def test_subrules_with_test
     parses = SubRulesWithTest.parse "123 word"
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
@@ -187,14 +184,13 @@ class BasicTest < Minitest::Test
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
-    leaf :ws, /\s+/, ignorable: true
 
     def foo(root, n)
       :pass
     end
   end
 
-  def test_subrules
+  def test_subrules_with_ancestor_test
     parses = SubRulesWithAncestorTest.parse "123 word"
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
@@ -204,6 +200,16 @@ class BasicTest < Minitest::Test
     assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
     assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
     assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+  end
+
+  class LeftAncestor
+    extend Gullah
+
+    rule :s, "words+"
+    rule :word, "foo | bar"
+
+    leaf :foo, /foo/
+    leaf :bar, /bar/
   end
 
   # TODO

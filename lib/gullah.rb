@@ -23,10 +23,16 @@ module Gullah
     end
   end
 
+  # don't make whitespace automatically ignorable
+  def keep_whitespace
+    @keep_whitespace = true
+  end
+
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
   def leaf(name, rx, ignorable: false, tests: [])
     init
     init_check(name)
+    leaf_check(rx)
     name = name.to_sym
     return if dup_check(:leaf, name, rx, tests)
 
@@ -67,6 +73,7 @@ module Gullah
     @leaves = []
     @starters = {}
     @tests = {}
+    @regexen = Set.new
     @committed = false
     @do_unary_branch_check = nil
   end
@@ -76,6 +83,18 @@ module Gullah
     return if @committed
     raise Error, "#{name} has no leaves" unless @leaves&.any?
 
+    if @keep_whitespace
+      remove_instance_variable :@keep_whitespace
+    else
+      used_rules = (@rules.map(&:name) + @leaves.map(&:name)).to_set
+      base = "_ws"
+      count = nil
+      while used_rules.include? "#{base}#{count}".to_sym
+        count = count.to_i + 1
+      end
+      leaf "#{base}#{count}".to_sym, /\s+/, ignorable: true
+    end
+
     # vet on commit so rule definition is order-independent
     [@leaves, @rules].flatten.each do |r|
       vetted_tests = r.tests.map { |t| vet t }
@@ -84,6 +103,7 @@ module Gullah
     end
     completeness_check
     loop_check
+    remove_instance_variable :@regexen
     remove_instance_variable :@leaf_dup_check if @leaf_dup_check
     remove_instance_variable :@rule_dup_check if @rule_dup_check
     @committed = true
@@ -117,6 +137,13 @@ module Gullah
         end
       end
     end
+  end
+
+  def leaf_check(rx)
+    if @regexen.include?(rx.to_s)
+      raise Error, "each leaf regex must be unique; duplicate regex: #{rx}"
+    end
+    @regexen << rx.to_s
   end
 
   class LoopCheck

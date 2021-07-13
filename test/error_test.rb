@@ -194,9 +194,9 @@ class ErrorTest < Minitest::Test
     end
   end
 
-  def test_filters
+  def test_test_return_value
     assert_raises Gullah::Error, 'bad test return value' do |e|
-      parses = BadTestReturnValue.parse 'bar baz'
+      BadTestReturnValue.parse 'bar baz'
       assert_match(/unexpected value/, e.message, 'tests return values')
     end
   end
@@ -214,9 +214,9 @@ class ErrorTest < Minitest::Test
     end
   end
 
-  def test_filters
+  def test_ancestor_test_return_value
     assert_raises Gullah::Error, 'bad ancestor test return value' do |e|
-      parses = BadAncestorTestReturnValue.parse 'bar baz'
+      BadAncestorTestReturnValue.parse 'bar baz'
       assert_match(/unexpected value/, e.message, 'tests return values')
     end
   end
