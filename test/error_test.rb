@@ -181,5 +181,43 @@ class ErrorTest < Minitest::Test
     end
   end
 
-  # TODO: the two errors raised in Node during testing
+  class BadTestReturnValue
+    extend Gullah
+
+    rule :foo, 'bar baz', tests: %i[foo]
+    leaf :bar, /bar/
+    leaf :baz, /baz/
+    leaf :ws, /\s+/, ignorable: true
+
+    def foo(n)
+      :foo
+    end
+  end
+
+  def test_filters
+    assert_raises Gullah::Error, 'bad test return value' do |e|
+      parses = BadTestReturnValue.parse 'bar baz'
+      assert_match(/unexpected value/, e.message, 'tests return values')
+    end
+  end
+
+  class BadAncestorTestReturnValue
+    extend Gullah
+
+    rule :foo, 'bar baz'
+    leaf :bar, /bar/, tests: %i[foo]
+    leaf :baz, /baz/
+    leaf :ws, /\s+/, ignorable: true
+
+    def foo(root, n)
+      :foo
+    end
+  end
+
+  def test_filters
+    assert_raises Gullah::Error, 'bad ancestor test return value' do |e|
+      parses = BadAncestorTestReturnValue.parse 'bar baz'
+      assert_match(/unexpected value/, e.message, 'tests return values')
+    end
+  end
 end
