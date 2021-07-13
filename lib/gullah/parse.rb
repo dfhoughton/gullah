@@ -32,6 +32,14 @@ module Gullah
       nodes.map { |n| n.dbg so: so }
     end
 
+    def clone
+      super.tap do |c|
+        if c.instance_variable_get :@summary
+          c.remove_instance_variable :@summary
+        end
+      end
+    end
+
     # the parse's syntactic structure represented as a string
     def summary
       @summary ||= nodes.map(&:summary).join(';')

@@ -14,9 +14,12 @@ module Gullah
     return if dup_check(:rule, name, body, tests)
 
     r = Rule.new name, body, tests: tests
-    @rules << r
-    r.starters.each do |r, n|
-      (@starters[r] ||= []) << n
+    subrules = r.subrules || [r]
+    subrules.each do |sr|
+      @rules << sr
+      sr.starters.each do |r, n|
+        (@starters[r] ||= []) << n
+      end
     end
   end
 

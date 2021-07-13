@@ -49,7 +49,7 @@ module Gullah
     # could this rule participate in a loop?
     def potentially_unary?
       if subrules
-        subrules.any?(&:potentially_unary)
+        subrules.any?(&:potentially_unary?)
       else
         atoms.sum(&:min_repeats) < 2
       end

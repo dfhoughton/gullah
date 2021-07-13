@@ -94,6 +94,7 @@ class BasicTest < Minitest::Test
     assert parse.nodes.last.trash?, 'the last node is the trash node'
   end
 
+  # TODO order dependence problem
   class Cat
     extend Gullah
 
@@ -128,8 +129,84 @@ class BasicTest < Minitest::Test
     assert_equal 'sat', vp&.own_text, 'we have the expected verb'
   end
 
+  class SubRules
+    extend Gullah
+
+    rule :s, "thing+"
+    rule :thing, "word | integer"
+
+    leaf :word, /[a-z]+/i
+    leaf :integer, /\d+/
+    leaf :ws, /\s+/, ignorable: true
+  end
+
+  def test_subrules
+    parses = SubRules.parse "123 word"
+    assert_equal 1, parses.length, 'there is only one parse of this sentence'
+    parse = parses.first
+    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.nodes.first
+    assert_equal :s, root.name, 'found expected root'
+    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
+    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
+    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+  end
+
+  class SubRulesWithTest
+    extend Gullah
+
+    rule :s, "thing+"
+    rule :thing, "word | integer", tests: %i[foo]
+
+    leaf :word, /[a-z]+/i
+    leaf :integer, /\d+/
+    leaf :ws, /\s+/, ignorable: true
+
+    def foo(n)
+      :pass
+    end
+  end
+
+  def test_subrules
+    parses = SubRulesWithTest.parse "123 word"
+    assert_equal 1, parses.length, 'there is only one parse of this sentence'
+    parse = parses.first
+    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.nodes.first
+    assert_equal :s, root.name, 'found expected root'
+    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
+    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
+    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+  end
+
+  class SubRulesWithAncestorTest
+    extend Gullah
+
+    rule :s, "thing+"
+    rule :thing, "word | integer", tests: %i[foo]
+
+    leaf :word, /[a-z]+/i
+    leaf :integer, /\d+/
+    leaf :ws, /\s+/, ignorable: true
+
+    def foo(root, n)
+      :pass
+    end
+  end
+
+  def test_subrules
+    parses = SubRulesWithAncestorTest.parse "123 word"
+    assert_equal 1, parses.length, 'there is only one parse of this sentence'
+    parse = parses.first
+    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.nodes.first
+    assert_equal :s, root.name, 'found expected root'
+    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
+    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
+    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+  end
+
   # TODO
-  # subrules
   # *
   # ?
   # {n,}
@@ -137,7 +214,6 @@ class BasicTest < Minitest::Test
   # ancestor tests
   # attribute stashing
   # returning extras from tests
-  # various error conditions are properly detected
   # ambiguous lexical rules -- run/run, bill/bill
   # filters
 end
