@@ -189,7 +189,7 @@ class ErrorTest < Minitest::Test
     leaf :baz, /baz/
     leaf :ws, /\s+/, ignorable: true
 
-    def foo(n)
+    def foo(_n)
       :foo
     end
   end
@@ -209,7 +209,7 @@ class ErrorTest < Minitest::Test
     leaf :baz, /baz/
     leaf :ws, /\s+/, ignorable: true
 
-    def foo(root, n)
+    def foo(_root, _n)
       :foo
     end
   end

@@ -87,11 +87,9 @@ module Gullah
       remove_instance_variable :@keep_whitespace
     else
       used_rules = (@rules.map(&:name) + @leaves.map(&:name)).to_set
-      base = "_ws"
+      base = '_ws'
       count = nil
-      while used_rules.include? "#{base}#{count}".to_sym
-        count = count.to_i + 1
-      end
+      count = count.to_i + 1 while used_rules.include? "#{base}#{count}".to_sym
       leaf "#{base}#{count}".to_sym, /\s+/, ignorable: true
     end
 
@@ -140,9 +138,8 @@ module Gullah
   end
 
   def leaf_check(rx)
-    if @regexen.include?(rx.to_s)
-      raise Error, "each leaf regex must be unique; duplicate regex: #{rx}"
-    end
+    raise Error, "each leaf regex must be unique; duplicate regex: #{rx}" if @regexen.include?(rx.to_s)
+
     @regexen << rx.to_s
   end
 

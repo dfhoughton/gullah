@@ -289,7 +289,8 @@ module Gullah
             record = [r.name, position, l, *extra]
             @failed_test = true
             (attributes[:failed_ancestor] ||= []) << record
-            (attributes[:failed_descendant] ||= []) << record
+            (child.attributes[:failed_descendant] ||= []) << record
+            child.instance_variable_set :@failed_test, true
           else
             raise Error, <<~MSG
               ancestor test #{r.name} returned an unexpected value:

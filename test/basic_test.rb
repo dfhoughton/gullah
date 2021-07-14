@@ -93,7 +93,7 @@ class BasicTest < Minitest::Test
     assert parse.nodes.last.trash?, 'the last node is the trash node'
   end
 
-  # TODO order dependence problem
+  # TODO: order dependence problem
   class Cat
     extend Gullah
 
@@ -131,15 +131,15 @@ class BasicTest < Minitest::Test
   class SubRules
     extend Gullah
 
-    rule :s, "thing+"
-    rule :thing, "word | integer"
+    rule :s, 'thing+'
+    rule :thing, 'word | integer'
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
   end
 
   def test_subrules
-    parses = SubRules.parse "123 word"
+    parses = SubRules.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
@@ -153,19 +153,19 @@ class BasicTest < Minitest::Test
   class SubRulesWithTest
     extend Gullah
 
-    rule :s, "thing+"
-    rule :thing, "word | integer", tests: %i[foo]
+    rule :s, 'thing+'
+    rule :thing, 'word | integer', tests: %i[foo]
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
 
-    def foo(n)
+    def foo(_n)
       :pass
     end
   end
 
   def test_subrules_with_test
-    parses = SubRulesWithTest.parse "123 word"
+    parses = SubRulesWithTest.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
@@ -179,19 +179,19 @@ class BasicTest < Minitest::Test
   class SubRulesWithAncestorTest
     extend Gullah
 
-    rule :s, "thing+"
-    rule :thing, "word | integer", tests: %i[foo]
+    rule :s, 'thing+'
+    rule :thing, 'word | integer', tests: %i[foo]
 
     leaf :word, /[a-z]+/i
     leaf :integer, /\d+/
 
-    def foo(root, n)
+    def foo(_root, _n)
       :pass
     end
   end
 
   def test_subrules_with_ancestor_test
-    parses = SubRulesWithAncestorTest.parse "123 word"
+    parses = SubRulesWithAncestorTest.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
@@ -205,11 +205,55 @@ class BasicTest < Minitest::Test
   class LeftAncestor
     extend Gullah
 
-    rule :s, "words+"
-    rule :word, "foo | bar"
+    rule :s, 'word+'
+    rule :word, 'foo | bar'
 
-    leaf :foo, /foo/
+    leaf :foo, /foo/, tests: %i[preceded_by_bar]
     leaf :bar, /bar/
+
+    def preceded_by_bar(root, n)
+      if n.prior.any? { |other| other.name == :bar }
+        :pass
+      elsif root.name == :s
+        :fail
+      end
+    end
+  end
+
+  def test_left_ancestor
+    parses = LeftAncestor.parse 'bar foo'
+    assert_equal 1, parses.length, 'one parse'
+    parse = parses.first
+    assert_equal 1, parse.nodes.length, 'one root for parse'
+    root = parse.nodes.first
+    assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
+  end
+
+  class RightAncestor
+    extend Gullah
+
+    rule :s, 'word+'
+    rule :word, 'foo | bar'
+
+    leaf :foo, /foo/, tests: %i[followed_by_bar]
+    leaf :bar, /bar/
+
+    def followed_by_bar(root, n)
+      if n.later.any? { |other| other.name == :bar }
+        :pass
+      elsif root.name == :s
+        :fail
+      end
+    end
+  end
+
+  def test_right_ancestor
+    parses = RightAncestor.parse 'bar foo'
+    assert_equal 1, parses.length, 'one parse'
+    parse = parses.first
+    assert_equal 1, parse.nodes.length, 'one root for parse'
+    root = parse.nodes.first
+    assert_equal 0, root.subtree.reject(&:failed_test).count { |n| n.name == :foo }, 'no foos'
   end
 
   # TODO
@@ -217,7 +261,6 @@ class BasicTest < Minitest::Test
   # ?
   # {n,}
   # {n,m}
-  # ancestor tests
   # attribute stashing
   # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill

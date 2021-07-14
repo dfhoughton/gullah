@@ -34,9 +34,7 @@ module Gullah
 
     def clone
       super.tap do |c|
-        if c.instance_variable_get :@summary
-          c.remove_instance_variable :@summary
-        end
+        c.remove_instance_variable :@summary if c.instance_variable_get :@summary
       end
     end
 
