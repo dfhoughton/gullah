@@ -257,11 +257,76 @@ class BasicTest < Minitest::Test
     assert_equal 0, root.subtree.reject(&:failed_test).count { |n| n.name == :foo }, 'no foos'
   end
 
+  class LowerLimit
+    extend Gullah
+
+    rule :s, 'a{2,}'
+    leaf :a, /a/
+  end
+
+  def lower_limit
+    parses = LowerLimit.parse "a"
+    assert_equal 0, parses.length, "we need at least one"
+    parses = LowerLimit.parse "a a"
+    assert_equal 1, parses.length, "two is enough"
+    parses = LowerLimit.parse "a a a"
+    assert_equal 1, parses.length, "more than two is fine"
+  end
+
+  class TwoLimits
+    extend Gullah
+
+    rule :s, 'a{2,3}'
+    leaf :a, /a/
+  end
+
+  def lower_limit
+    parses = LowerLimit.parse "a"
+    assert_equal 0, parses.length, "we need at least one"
+    parses = LowerLimit.parse "a a"
+    assert_equal 1, parses.length, "two is enough"
+    parses = LowerLimit.parse "a a a"
+    assert_equal 1, parses.length, "three is also good"
+    parses = LowerLimit.parse "a a a a"
+    assert_equal 1, parses.length, "four is too many"
+  end
+
+  class HoweverMany
+    extend Gullah
+
+    rule :s, 'b a*'
+    leaf :a, /a/
+    leaf :b, /b/
+  end
+
+  def lower_limit
+    parses = HoweverMany.parse "b"
+    assert_equal 1, parses.length, "we don't even need one"
+    parses = HoweverMany.parse "b a"
+    assert_equal 1, parses.length, "but we can take one"
+    parses = HoweverMany.parse "b a a"
+    assert_equal 1, parses.length, "and we can take moer than one"
+  end
+
+  class OneOrNone
+    extend Gullah
+
+    rule :s, 'b a?'
+    leaf :a, /a/
+    leaf :b, /b/
+  end
+
+  def lower_limit
+    parses = OneOrNone.parse "b"
+    assert_equal 1, parses.length, "we don't even need one"
+    parses = OneOrNone.parse "b a"
+    assert_equal 1, parses.length, "but we can take one"
+    parses = OneOrNone.parse "b a a"
+    assert_equal 0, parses.length, "and we can't take more than one"
+  end
+
   # TODO
-  # *
   # ?
-  # {n,}
-  # {n,m}
   # attribute stashing
   # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill
