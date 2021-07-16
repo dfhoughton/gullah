@@ -3,7 +3,7 @@
 module Gullah
   # a minimal rule fragment; this is where the actual matching occurs
   class Atom
-    attr_reader :seeking, :min_repeats, :max_repeats, :parent, :next # the type of node sought
+    attr_reader :seeking, :min_repeats, :max_repeats, :parent, :next, :literal
 
     def initialize(atom, parent)
       @parent = parent
@@ -21,7 +21,8 @@ module Gullah
         .match(atom)&.captures
       raise Error, "cannot parse #{atom}" unless rule
 
-      @seeking = rule.to_sym
+      @literal = rule[0] =~ /['"]/
+      @seeking = clean(rule).to_sym
 
       if suffix
         case suffix[0]
@@ -95,6 +96,27 @@ module Gullah
       else
         offset
       end
+    end
+
+    # remove quotes and escapes
+    def clean(str)
+      if literal
+        str = str[1...(str.length-1)]
+      end
+      escaped = false
+      cleaned = ''
+      (0...str.length).each do |i|
+        c = str[i]
+        if escaped
+          cleaned += c
+          escaped = false
+        elsif c == '\\'
+          escaped = true
+        else
+          cleaned += c
+        end
+      end
+      cleaned
     end
   end
 end

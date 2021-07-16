@@ -264,7 +264,7 @@ class BasicTest < Minitest::Test
     leaf :a, /a/
   end
 
-  def lower_limit
+  def test_lower_limit
     parses = LowerLimit.parse "a"
     assert_equal 0, parses.length, "we need at least one"
     parses = LowerLimit.parse "a a"
@@ -280,7 +280,7 @@ class BasicTest < Minitest::Test
     leaf :a, /a/
   end
 
-  def lower_limit
+  def test_two_limits
     parses = LowerLimit.parse "a"
     assert_equal 0, parses.length, "we need at least one"
     parses = LowerLimit.parse "a a"
@@ -299,7 +299,7 @@ class BasicTest < Minitest::Test
     leaf :b, /b/
   end
 
-  def lower_limit
+  def test_however_many
     parses = HoweverMany.parse "b"
     assert_equal 1, parses.length, "we don't even need one"
     parses = HoweverMany.parse "b a"
@@ -316,7 +316,7 @@ class BasicTest < Minitest::Test
     leaf :b, /b/
   end
 
-  def lower_limit
+  def test_one_or_none
     parses = OneOrNone.parse "b"
     assert_equal 1, parses.length, "we don't even need one"
     parses = OneOrNone.parse "b a"
@@ -325,8 +325,25 @@ class BasicTest < Minitest::Test
     assert_equal 0, parses.length, "and we can't take more than one"
   end
 
+  class Literal
+    extend Gullah
+
+    rule :money, '"$" digits'
+    leaf :digits, /\d+/
+  end
+
+  def test_literal
+    parses = Literal.parse "$12"
+    assert_equal 1, parses.length, "we don't even need one"
+    parse = parses.first
+    assert_equal 1, parse.length, "there's a root node"
+    root = parse.nodes.first
+    assert_equal 2, root.leaves.count, "there are two leaves"
+    assert_equal "$", root.leaves.first.own_text, "the first leaf is '$'"
+    assert_equal "12", root.leaves.last.own_text, "the last leaf is '12'"
+  end
+
   # TODO
-  # ?
   # attribute stashing
   # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill

@@ -21,6 +21,9 @@ module Gullah
         (@starters[r] ||= []) << n
       end
     end
+    r.literals.each do |sym|
+      leaf sym.to_s, Regexp.new(quotemeta(sym.to_s))
+    end
   end
 
   # don't make whitespace automatically ignorable
@@ -240,5 +243,18 @@ module Gullah
 
       m
     end
+  end
+
+  # escape a string literal for use in a regex
+  def quotemeta(str)
+    quoted = ''
+    (0...str.length).each do |i|
+      c = str[i]
+      if c =~ /[{}()\[\].?+*\\^$]/
+        quoted += '\\'
+      end
+      quoted += c
+    end
+    quoted
   end
 end

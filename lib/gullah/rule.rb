@@ -73,5 +73,14 @@ module Gullah
         atoms.map(&:seeking).uniq
       end
     end
+
+    # obtain all the literals required by this rule
+    def literals
+      if subrules
+        subrules.flat_map(&:literals).uniq
+      else
+        atoms.select(&:literal).map(&:seeking).uniq
+      end
+    end
   end
 end
