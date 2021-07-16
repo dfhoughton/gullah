@@ -265,12 +265,12 @@ class BasicTest < Minitest::Test
   end
 
   def test_lower_limit
-    parses = LowerLimit.parse "a"
-    assert_equal 0, parses.length, "we need at least one"
-    parses = LowerLimit.parse "a a"
-    assert_equal 1, parses.length, "two is enough"
-    parses = LowerLimit.parse "a a a"
-    assert_equal 1, parses.length, "more than two is fine"
+    parses = LowerLimit.parse 'a'
+    assert_equal 0, parses.select(&:success?).length, 'we need at least one'
+    parses = LowerLimit.parse 'a a'
+    assert_equal 1, parses.length, 'two is enough'
+    parses = LowerLimit.parse 'a a a'
+    assert_equal 1, parses.length, 'more than two is fine'
   end
 
   class TwoLimits
@@ -281,14 +281,14 @@ class BasicTest < Minitest::Test
   end
 
   def test_two_limits
-    parses = LowerLimit.parse "a"
-    assert_equal 0, parses.length, "we need at least one"
-    parses = LowerLimit.parse "a a"
-    assert_equal 1, parses.length, "two is enough"
-    parses = LowerLimit.parse "a a a"
-    assert_equal 1, parses.length, "three is also good"
-    parses = LowerLimit.parse "a a a a"
-    assert_equal 1, parses.length, "four is too many"
+    parses = LowerLimit.parse 'a'
+    assert_equal 0, parses.select(&:success?).length, 'we need at least one'
+    parses = LowerLimit.parse 'a a'
+    assert_equal 1, parses.length, 'two is enough'
+    parses = LowerLimit.parse 'a a a'
+    assert_equal 1, parses.length, 'three is also good'
+    parses = LowerLimit.parse 'a a a a'
+    assert_equal 1, parses.length, 'four is too many'
   end
 
   class HoweverMany
@@ -300,12 +300,12 @@ class BasicTest < Minitest::Test
   end
 
   def test_however_many
-    parses = HoweverMany.parse "b"
+    parses = HoweverMany.parse 'b'
     assert_equal 1, parses.length, "we don't even need one"
-    parses = HoweverMany.parse "b a"
-    assert_equal 1, parses.length, "but we can take one"
-    parses = HoweverMany.parse "b a a"
-    assert_equal 1, parses.length, "and we can take moer than one"
+    parses = HoweverMany.parse 'b a'
+    assert_equal 1, parses.length, 'but we can take one'
+    parses = HoweverMany.parse 'b a a'
+    assert_equal 1, parses.length, 'and we can take moer than one'
   end
 
   class OneOrNone
@@ -317,12 +317,12 @@ class BasicTest < Minitest::Test
   end
 
   def test_one_or_none
-    parses = OneOrNone.parse "b"
+    parses = OneOrNone.parse 'b'
     assert_equal 1, parses.length, "we don't even need one"
-    parses = OneOrNone.parse "b a"
-    assert_equal 1, parses.length, "but we can take one"
-    parses = OneOrNone.parse "b a a"
-    assert_equal 0, parses.length, "and we can't take more than one"
+    parses = OneOrNone.parse 'b a'
+    assert_equal 1, parses.length, 'but we can take one'
+    parses = OneOrNone.parse 'b a a'
+    assert_equal 0, parses.select(&:success?).length, "and we can't take more than one"
   end
 
   class Literal
@@ -333,14 +333,14 @@ class BasicTest < Minitest::Test
   end
 
   def test_literal
-    parses = Literal.parse "$12"
-    assert_equal 1, parses.length, "we don't even need one"
+    parses = Literal.parse '$12'
+    assert_equal 1, parses.length, 'it parses'
     parse = parses.first
     assert_equal 1, parse.length, "there's a root node"
     root = parse.nodes.first
-    assert_equal 2, root.leaves.count, "there are two leaves"
-    assert_equal "$", root.leaves.first.own_text, "the first leaf is '$'"
-    assert_equal "12", root.leaves.last.own_text, "the last leaf is '12'"
+    assert_equal 2, root.leaves.count, 'there are two leaves'
+    assert_equal '$', root.leaves.first.own_text, "the first leaf is '$'"
+    assert_equal '12', root.leaves.last.own_text, "the last leaf is '12'"
   end
 
   # TODO

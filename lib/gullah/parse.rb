@@ -42,6 +42,15 @@ module Gullah
       @pending_count ||= nodes.select(&:pending_tests?).count
     end
 
+    def errors?
+      correctness_count.positive?
+    end
+
+    # all leaves accounted for without errors; all tests passed
+    def success?
+      !errors? && nodes.all? { |n| n.ignorable? || n.nonterminal? && !n.pending_tests? }
+    end
+
     # a simplified representation for debugging
     # "so" = "significant only"
     def dbg(so: false)

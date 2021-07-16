@@ -100,9 +100,7 @@ module Gullah
 
     # remove quotes and escapes
     def clean(str)
-      if literal
-        str = str[1...(str.length-1)]
-      end
+      str = str[1...(str.length - 1)] if literal
       escaped = false
       cleaned = ''
       (0...str.length).each do |i|

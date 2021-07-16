@@ -250,9 +250,7 @@ module Gullah
     quoted = ''
     (0...str.length).each do |i|
       c = str[i]
-      if c =~ /[{}()\[\].?+*\\^$]/
-        quoted += '\\'
-      end
+      quoted += '\\' if c =~ /[{}()\[\].?+*\\^$]/
       quoted += c
     end
     quoted

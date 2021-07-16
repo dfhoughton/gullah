@@ -22,7 +22,7 @@ module Gullah
     def size
       @bin.length
     end
-    alias_method :length, :size
+    alias length size
 
     def <<(parse)
       return unless adequate? parse
@@ -72,11 +72,11 @@ module Gullah
 
       @thresholds.slice(:correctness, :size).each do |f, limit|
         value = case f
-        when :correctness
-          parse.correctness_count
-        when :size
-          parse.size
-        end
+                when :correctness
+                  parse.correctness_count
+                when :size
+                  parse.size
+                end
         return true if value < limit
         return false if value > limit
       end
@@ -92,15 +92,15 @@ module Gullah
     def init_thresholds(parse)
       @filters.each do |f|
         value = case f
-        when :completion
-          parse.length
-        when :correctness
-          parse.correctness_count
-        when :size
-          parse.size
-        when :pending
-          parse.pending_count
-        end
+                when :completion
+                  parse.length
+                when :correctness
+                  parse.correctness_count
+                when :size
+                  parse.size
+                when :pending
+                  parse.pending_count
+                end
         @thresholds[f] = value
       end
       @first = false
