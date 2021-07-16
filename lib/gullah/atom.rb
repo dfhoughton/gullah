@@ -83,6 +83,10 @@ module Gullah
       count < min_repeats ? nil : returnable(nodes, nodes.length) # all nodes were consumed
     end
 
+    def max_consumption
+      @max_consumption ||= self.next ? max_repeats + self.next.max_consumption : max_repeats
+    end
+
     private
 
     def returnable(nodes, offset)

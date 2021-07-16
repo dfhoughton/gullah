@@ -15,6 +15,7 @@ class BasicTest < Minitest::Test
   end
 
   def test_basic
+    # byebug
     parses = Simple.parse 'foo bar baz'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
@@ -114,7 +115,7 @@ class BasicTest < Minitest::Test
     leaf :prepositions, /\b(on|in|around|above|beside)\b/i
     leaf :verbs, /\b(sat|slept|moped)\b/
     leaf :adjectives, /\b(big|small|hairy|bald)\b/i
-    leaf :whatever, /\W+/, ignorable: true
+    leaf :whatever, /[^\w\s]+/, ignorable: true
   end
 
   def test_cat
@@ -265,4 +266,5 @@ class BasicTest < Minitest::Test
   # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill
   # filters
+  # leaf shortcuts
 end

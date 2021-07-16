@@ -43,8 +43,8 @@ module Gullah
     commit
     bases = lex(text)
     hopper = Hopper.new(filters, batch)
-    while (parse = bases.pop) # use stack for depth-first parsing
-      next unless hopper.adequate?(parse)
+    while (parse = bases.pop) # the more complete parses will be at the end
+      next unless hopper.continuable?(parse)
 
       any_found = false
       parse.nodes.each_with_index do |n, i|
@@ -55,7 +55,7 @@ module Gullah
 
           if (p = parse.add(i, offset, a.parent, @do_unary_branch_check))
             any_found = true
-            bases.push p if hopper.adequate?(p)
+            bases << p
           end
         end
       end
@@ -78,7 +78,7 @@ module Gullah
     @do_unary_branch_check = nil
   end
 
-  # do some sanity checking and initialization
+  # do some sanity checking, initialization, and optimization
   def commit
     return if @committed
     raise Error, "#{name} has no leaves" unless @leaves&.any?
@@ -101,6 +101,10 @@ module Gullah
     end
     completeness_check
     loop_check
+    # arrange things so we first try rules that can complete more of the parse;
+    # better would be sorting by frequency in parse trees, but we don't have
+    # that information
+    @starters.transform_values { |atoms| atoms.sort(&:max_consumption).reverse }
     remove_instance_variable :@regexen
     remove_instance_variable :@leaf_dup_check if @leaf_dup_check
     remove_instance_variable :@rule_dup_check if @rule_dup_check

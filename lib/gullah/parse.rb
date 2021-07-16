@@ -26,6 +26,22 @@ module Gullah
       end
     end
 
+    def length
+      nodes.length
+    end
+
+    def size
+      @size ||= nodes.sum(&:size)
+    end
+
+    def correctness_count
+      @correctness_count ||= nodes.select(&:failed_test).count
+    end
+
+    def pending_count
+      @pending_count ||= nodes.select(&:pending_tests?).count
+    end
+
     # a simplified representation for debugging
     # "so" = "significant only"
     def dbg(so: false)
@@ -34,7 +50,9 @@ module Gullah
 
     def clone
       super.tap do |c|
-        c.remove_instance_variable :@summary if c.instance_variable_get :@summary
+        %i[@summary @size @correctness_count @pending_count].each do |v|
+          c.remove_instance_variable v if c.instance_variable_get v
+        end
       end
     end
 
