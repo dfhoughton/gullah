@@ -126,7 +126,7 @@ class BasicTest < Minitest::Test
     root = parse.nodes.first
     assert_equal :S, root.name, 'the root node is a sentence'
     vp = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
-    assert_equal 'sat', vp&.own_text, 'we have the expected verb'
+    assert_equal 'sat', vp&.text, 'we have the expected verb'
   end
 
   class SubRules
@@ -339,8 +339,8 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.length, "there's a root node"
     root = parse.nodes.first
     assert_equal 2, root.leaves.count, 'there are two leaves'
-    assert_equal '$', root.leaves.first.own_text, "the first leaf is '$'"
-    assert_equal '12', root.leaves.last.own_text, "the last leaf is '12'"
+    assert_equal '$', root.leaves.first.text, "the first leaf is '$'"
+    assert_equal '12', root.leaves.last.text, "the last leaf is '12'"
   end
 
   # TODO

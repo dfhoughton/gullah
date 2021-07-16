@@ -80,7 +80,7 @@ module Gullah
     end
 
     # the portion of the original text dominated by this node
-    def own_text
+    def text
       @text[start...self.end]
     end
 
@@ -199,7 +199,7 @@ module Gullah
         simpleton[:attributes] = deep_clone attributes if attributes.any?
         if leaf
           simpleton[:ignorable] = true unless so || significant?
-          simpleton[:text] = own_text
+          simpleton[:text] = text
         else
           simpleton[:children] = children.map { |c| c.dbg so: so }
         end

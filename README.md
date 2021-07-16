@@ -36,7 +36,7 @@ A simple, fault-tolerant bottom-up parser written in Ruby.
     root = parse.nodes.first
     assert_equal :S, root.name, 'the root node is a sentence'
     vp = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
-    assert_equal 'sat', vp&.own_text, 'we have the expected verb'
+    assert_equal 'sat', vp&.text, 'we have the expected verb'
   end
 ```
 
