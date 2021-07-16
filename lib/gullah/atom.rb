@@ -64,7 +64,9 @@ module Gullah
 
     # returns the new offset, or nil if the atom doesn't match
     def match(nodes, offset)
-      return nil if offset >= nodes.length
+      if offset >= nodes.length
+        return min_repeats == 0 ? offset : nil
+      end
 
       count = 0
       nodes[offset...nodes.length].each_with_index do |n, i|
