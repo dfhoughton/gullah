@@ -348,5 +348,4 @@ class BasicTest < Minitest::Test
   # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill
   # filters
-  # leaf shortcuts
 end
