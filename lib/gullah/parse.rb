@@ -51,6 +51,10 @@ module Gullah
       !errors? && nodes.all? { |n| n.ignorable? || n.nonterminal? && !n.pending_tests? }
     end
 
+    def failure?
+      !success?
+    end
+
     # a simplified representation for debugging
     # "so" = "significant only"
     def dbg(so: false)

@@ -107,7 +107,7 @@ module Gullah
     # arrange things so we first try rules that can complete more of the parse;
     # better would be sorting by frequency in parse trees, but we don't have
     # that information
-    @starters.transform_values { |atoms| atoms.sort(&:max_consumption).reverse }
+    @starters.transform_values { |atoms| atoms.sort_by(&:max_consumption).reverse }
     remove_instance_variable :@regexen
     remove_instance_variable :@leaf_dup_check if @leaf_dup_check
     remove_instance_variable :@rule_dup_check if @rule_dup_check

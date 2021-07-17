@@ -15,7 +15,6 @@ class BasicTest < Minitest::Test
   end
 
   def test_basic
-    # byebug
     parses = Simple.parse 'foo bar baz'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
@@ -70,6 +69,13 @@ class BasicTest < Minitest::Test
     assert_equal 1, parses.length, '1 optimal parse'
     parse = parses.first
     assert_equal 1, parse.nodes.length, 'parse has a root node'
+    root = parse.nodes.first
+    assertion = root.subtree
+                    .select(&:nonterminal?)
+                    .select { |n| n.name == :a }.all? do |n|
+      (att = n.attributes[:satisfied]) && att.include?([:balanced])
+    end
+    assert assertion, 'the balanced nodes are marked as such'
   end
 
   class Trash
@@ -91,7 +97,9 @@ class BasicTest < Minitest::Test
     assert_equal 4, parse.nodes.select(&:ignorable?).count, 'there are 4 ignorable nodes'
     assert_equal 4, parse.nodes.select { |n| n.name == :word }.count, 'there are 4 word nodes'
     assert_equal 1, parse.nodes.select(&:trash?).count, 'there is 1 trash node'
-    assert parse.nodes.last.trash?, 'the last node is the trash node'
+    last_node = parse.nodes.last
+    assert last_node.trash?, 'the last node is the trash node'
+    assert_equal true, last_node.attributes[:trash], 'the trash node has an attribute marking it as such'
   end
 
   # TODO: order dependence problem
@@ -161,7 +169,7 @@ class BasicTest < Minitest::Test
     leaf :integer, /\d+/
 
     def foo(_n)
-      :pass
+      %i[pass etc]
     end
   end
 
@@ -172,7 +180,9 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
     root = parse.nodes.first
     assert_equal :s, root.name, 'found expected root'
-    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
+    things = root.subtree.select { |n| n.name == :thing }
+    assert_equal 2, things.count, 'two things'
+    assert things.all? { |n| n.attributes[:satisfied].include?(%i[foo etc]) }, 'passing tests stuff in extra bits'
     assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
     assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
   end
@@ -198,7 +208,14 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
     root = parse.nodes.first
     assert_equal :s, root.name, 'found expected root'
-    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
+    things = root.subtree.select { |n| n.name == :thing }
+    assert_equal 2, things.count, 'two things'
+    things.each do |thing|
+      assert root.attributes[:satisfied_ancestor].include?([:foo, thing.position]),
+             'ancestor is marked when ancestor test passes'
+      assert thing.attributes[:satisfied_descendant].include?([:foo, root.position]),
+             'descendant is marked when ancestor test passes'
+    end
     assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
     assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
   end
@@ -343,15 +360,44 @@ class BasicTest < Minitest::Test
     assert_equal '12', root.leaves.last.text, "the last leaf is '12'"
   end
 
+  class FiltersAndFailures
+    extend Gullah
+
+    rule :numbers, 'integer+'
+    rule :integer, 'prime | nonprime'
+    rule :prime, 'number', tests: [:prime]
+    rule :nonprime, 'number', tests: [:nonprime]
+
+    leaf :number, /\d+/
+
+    def prime(n)
+      if [2, 3, 5, 7].include?(n.text.to_i)
+        :pass
+      else
+        :fail
+      end
+    end
+
+    def nonprime(n)
+      prime(n) == :pass ? :fail : :pass
+    end
+  end
+
+  def test_filters_and_failures
+    parses = FiltersAndFailures.parse '1 2', filters: []
+    assert parses.length > 1, 'removing the filters gives us many parses'
+    assert parses.any?(&:success?), 'there is at least one correct parse'
+    assert parses.any?(&:failure?), 'there is at least one failure'
+    n = parses.first(&:failure?).nodes.find(&:failed_test)
+    assert !n.nil?, 'found a node that failed its test'
+    assert n.attributes[:failures].any? { |ar| [[:prime], [:nonprime]].include? ar }, 'nature of failure is marked'
+  end
+
   # TODO
-  # attribute stashing
-  # returning extras from tests
   # ambiguous lexical rules -- run/run, bill/bill
-  # filters
   private
 
   def good(parses)
     parses.select(&:success?)
   end
-
 end

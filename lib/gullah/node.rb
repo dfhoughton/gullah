@@ -20,7 +20,6 @@ module Gullah
       end
       if trash?
         @failed_test = true
-        attributes[:failures] = [:"?"]
       else
         rule.tests.each do |t|
           result, *extra = Array(t.call(self))
@@ -282,14 +281,12 @@ module Gullah
             (attributes[:pending] ||= []) << pair
           when :pass
             # mark the results on the parent and the child
-            record = [r.name, position, l, *extra]
-            (attributes[:satisfied_ancestor] ||= []) << record
-            (child.attributes[:satisfied_descendant] ||= []) << record
+            (attributes[:satisfied_ancestor] ||= []) << [r.name, l, *extra]
+            (child.attributes[:satisfied_descendant] ||= []) << [r.name, position, *extra]
           when :fail
-            record = [r.name, position, l, *extra]
             @failed_test = true
-            (attributes[:failed_ancestor] ||= []) << record
-            (child.attributes[:failed_descendant] ||= []) << record
+            (attributes[:failed_ancestor] ||= []) << [r.name, l, *extra]
+            (child.attributes[:failed_descendant] ||= []) << [r.name, position, *extra]
             child.instance_variable_set :@failed_test, true
           else
             raise Error, <<~MSG

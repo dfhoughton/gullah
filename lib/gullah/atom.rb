@@ -65,7 +65,7 @@ module Gullah
     # returns the new offset, or nil if the atom doesn't match
     def match(nodes, offset)
       if offset >= nodes.length
-        return min_repeats == 0 ? offset : nil
+        return min_repeats.zero? ? offset : nil
       end
 
       count = 0
@@ -86,8 +86,12 @@ module Gullah
       count < min_repeats ? nil : returnable(nodes, nodes.length) # all nodes were consumed
     end
 
+    # used to order rules so greedier ones go first
     def max_consumption
-      @max_consumption ||= self.next ? max_repeats + self.next.max_consumption : max_repeats
+      @max_consumption ||= begin
+        augment = max_repeats == Float::INFINITY ? 10 : max_repeats
+        self.next&.max_consumption.to_i + augment
+      end
     end
 
     private
