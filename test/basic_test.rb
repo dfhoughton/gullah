@@ -245,6 +245,8 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.nodes.length, 'one root for parse'
     root = parse.nodes.first
     assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
+    parses = LeftAncestor.parse 'foo bar'
+    assert_equal 0, good(parses).length, "no good parses of 'foo bar'"
   end
 
   class RightAncestor
@@ -266,12 +268,14 @@ class BasicTest < Minitest::Test
   end
 
   def test_right_ancestor
-    parses = RightAncestor.parse 'bar foo'
+    parses = RightAncestor.parse 'foo bar'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
     assert_equal 1, parse.nodes.length, 'one root for parse'
     root = parse.nodes.first
-    assert_equal 0, root.subtree.reject(&:failed_test).count { |n| n.name == :foo }, 'no foos'
+    assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
+    parses = RightAncestor.parse 'bar foo'
+    assert_equal 0, good(parses).length, "no good parses of 'bar foo'"
   end
 
   class LowerLimit
@@ -393,8 +397,33 @@ class BasicTest < Minitest::Test
     assert n.attributes[:failures].any? { |ar| [[:prime], [:nonprime]].include? ar }, 'nature of failure is marked'
   end
 
-  # TODO
-  # ambiguous lexical rules -- run/run, bill/bill
+  class Ambiguous
+    extend Gullah
+
+    rule :S, 'verb NP'
+    rule :NP, 'determiner noun'
+
+    leaf :determiner, /\b(?:a|an|the)\b/i
+    leaf :verb, /\b(?:run|walk|talk)\b/i
+    leaf :noun, /\b(?:run|walk|talk)\b/i
+  end
+
+  def test_ambiguous
+    parses = Ambiguous.parse 'walk the walk'
+    assert_equal 1, parses.length, 'got one good parse'
+    parse = parses.first
+    assert_equal 1, parse.length, 'got one root node'
+    root = parse.nodes.first
+    noun = root.subtree.find { |n| n.name == :noun }
+    assert !noun.nil?, 'found a noun'
+    assert_equal 'walk', noun.text, "the noun is 'walk'"
+    assert_equal root.leaves.last, noun, 'the noun is the last leaf'
+    verb = root.subtree.find { |n| n.name == :verb }
+    assert !verb.nil?, 'found a verb'
+    assert_equal 'walk', verb.text, "the verb is 'walk'"
+    assert_equal root.leaves.first, verb, 'the verb is the first leaf'
+  end
+
   private
 
   def good(parses)

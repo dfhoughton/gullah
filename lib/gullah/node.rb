@@ -152,15 +152,41 @@ module Gullah
     end
 
     def siblings
-      parent ? parent.children : []
+      parent.children if parent
+    end
+
+    def sibling_index
+      if parent
+        @sibling_index ||= parent.children.index_of self
+      end
     end
 
     def prior_siblings
-      siblings.select { |n| n.start < start }
+      parent && siblings[0...sibling_index]
     end
 
     def later_siblings
-      siblings.select { |n| n.start > start }
+      parent && siblings[(sibling_index+1)..]
+    end
+
+    def last_child?
+      parent && sibling_index == parent.children.length - 1
+    end
+
+    def first_child?
+      sibling_index == 0
+    end
+
+    # the immediately prior sibling to this node
+    def prior_sibling
+      if parent
+        first_child? ? nil : parent.children[sibling_index-1]
+      end
+    end
+
+    # the immediately following sibling to this node
+    def later_sibling
+      parent && parent.children[sibling_index+1]
     end
 
     def leaves
@@ -168,7 +194,7 @@ module Gullah
     end
 
     def prior
-      root.descendants.select { |n| n.start < start }
+      root.descendants.reject { |n| n.contains? start }.select { |n| n.start < start }
     end
 
     def later
@@ -178,7 +204,12 @@ module Gullah
     def clone
       super.tap do |c|
         c.instance_variable_set :@attributes, deep_clone(attributes)
-        c.instance_variable_set :@children, deep_clone(children) unless c.leaf
+        unless c.leaf
+          c.instance_variable_set :@children, deep_clone(children)
+          c.children.each do |child|
+            child.instance_variable_set :@parent, c
+          end
+        end
       end
     end
 
