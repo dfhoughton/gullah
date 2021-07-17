@@ -18,7 +18,7 @@ module Gullah
         n = cz.new(b, s, e, rule)
         return nil if loop_check && n.send(:loop_check?)
 
-        if n.leaf
+        if n.leaf?
           b.nodes << n
         else
           b.nodes[s...e] = [n]
@@ -35,7 +35,7 @@ module Gullah
     end
 
     def correctness_count
-      @correctness_count ||= nodes.select(&:failed_test).count
+      @correctness_count ||= nodes.select(&:failed?).count
     end
 
     def pending_count

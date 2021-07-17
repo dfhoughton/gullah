@@ -4,23 +4,21 @@
 module Gullah
   class Node
     # TODO: fix this documentation
-    attr_reader :parent, :rule, :leaf, :failed_test, :attributes, :children
+    attr_reader :parent, :rule, :attributes, :children
 
     def initialize(parse, s, e, rule)
       @rule = rule
       @leaf = rule.is_a?(Leaf) || trash?
       @text = parse.text
       @attributes = {}
-      if leaf
+      if @leaf
         @start = s
         @end = e
       else
         @children = parse.nodes[s...e]
         @children.each { |n| adopt n }
       end
-      if trash?
-        @failed_test = true
-      else
+      unless trash?
         rule.tests.each do |t|
           result, *extra = Array(t.call(self))
           case result
@@ -40,7 +38,7 @@ module Gullah
           end
         end
       end
-      unless failed_test
+      unless failed?
         # if any test failed, this node will not be the child of another node
         rule.ancestor_tests.each do |t|
           # use position rather than node itself for the sake of clonability
@@ -58,6 +56,14 @@ module Gullah
       false
     end
 
+    def leaf?
+      @leaf
+    end
+
+    def failed?
+      trash? || @failed_test
+    end
+
     # does this node's subtree contain unsatisfied syntactic requirements?
     def pending_tests?
       !!attributes[:pending]
@@ -65,7 +71,7 @@ module Gullah
 
     # whitespace, punctuation, or comments, for example
     def ignorable?
-      leaf && rule.ignorable
+      @leaf && rule.ignorable
     end
 
     # not ignorable
@@ -75,7 +81,7 @@ module Gullah
 
     # not a leaf?
     def nonterminal?
-      !leaf
+      !@leaf
     end
 
     # the portion of the original text dominated by this node
@@ -105,7 +111,7 @@ module Gullah
 
     # distance from first leaf
     def height
-      @height ||= leaf ? 0 : 1 + children[0].height
+      @height ||= @leaf ? 0 : 1 + children[0].height
     end
 
     # unique identifier of a node in a particular parse
@@ -131,7 +137,7 @@ module Gullah
     end
 
     def size
-      @size ||= leaf ? 1 : @children.map(&:size).sum + 1
+      @size ||= @leaf ? 1 : @children.map(&:size).sum + 1
     end
 
     # the root of this node's current parse tree
@@ -194,7 +200,7 @@ module Gullah
     end
 
     def leaves
-      leaf ? [self] : descendants.select(&:leaf)
+      @leaf ? [self] : descendants.select(&:leaf?)
     end
 
     def prior
@@ -208,7 +214,7 @@ module Gullah
     def clone
       super.tap do |c|
         c.instance_variable_set :@attributes, deep_clone(attributes)
-        unless c.leaf
+        unless c.leaf?
           c.instance_variable_set :@children, deep_clone(children)
           c.children.each do |child|
             child.instance_variable_set :@parent, c
@@ -229,9 +235,9 @@ module Gullah
           depth: depth
         }
       }.tap do |simpleton|
-        simpleton[:failed] = true if failed_test
+        simpleton[:failed] = true if @failed_test
         simpleton[:attributes] = deep_clone attributes if attributes.any?
-        if leaf
+        if leaf?
           simpleton[:ignorable] = true unless so || significant?
           simpleton[:text] = text
         else
@@ -242,7 +248,7 @@ module Gullah
 
     # the node's syntactic structure represented as a string
     def summary
-      @summary ||= leaf ? name : "#{name}[#{children.map(&:summary).join(',')}]"
+      @summary ||= @leaf ? name : "#{name}[#{children.map(&:summary).join(',')}]"
     end
 
     protected
@@ -296,7 +302,7 @@ module Gullah
 
       def each(&block)
         yield @n unless @n == @skip
-        unless @n.leaf
+        unless @n.leaf?
           @n.children.each do |c|
             c.send(:_descendants, @skip).each(&block)
           end
@@ -347,7 +353,7 @@ module Gullah
     def loop_check?(seen = nil)
       return true if seen == name
 
-      return false if !leaf && children.length > 1
+      return false if !@leaf && children.length > 1
 
       if seen.nil?
         # this is the beginning of the check
@@ -355,7 +361,7 @@ module Gullah
         # all those below it must have passed the check
         seen = name
       end
-      leaf ? false : children.first.loop_check?(seen)
+      @leaf ? false : children.first.loop_check?(seen)
     end
   end
 end

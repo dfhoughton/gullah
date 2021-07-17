@@ -32,10 +32,10 @@ class TreeWalkingTest < Minitest::Test
     assert_equal ' ', ls.text
     assert_equal [10, 11, 12], collect(nine.siblings).map(&:to_i)
     assert_equal [10, 11, 12], collect(nine.later_siblings).map(&:to_i)
-    assert_equal (1..8).to_a, collect(nine.prior.select(&:leaf)).map(&:to_i)
-    assert_equal (10..16).to_a, collect(nine.later.select(&:leaf)).map(&:to_i)
-    assert_equal %i[b b], nine.prior.reject(&:leaf).map(&:name)
-    assert_equal %i[b], nine.later.reject(&:leaf).map(&:name)
+    assert_equal (1..8).to_a, collect(nine.prior.select(&:leaf?)).map(&:to_i)
+    assert_equal (10..16).to_a, collect(nine.later.select(&:leaf?)).map(&:to_i)
+    assert_equal %i[b b], nine.prior.reject(&:leaf?).map(&:name)
+    assert_equal %i[b], nine.later.reject(&:leaf?).map(&:name)
     assert_equal (9..12).to_a, collect(nine.parent.leaves).map(&:to_i)
     assert_equal (1..16).to_a, collect(root.leaves).map(&:to_i)
     ten = root.leaves.find { |l| l.text == '10' }
@@ -64,7 +64,7 @@ class TreeWalkingTest < Minitest::Test
       last_node = n
       assert n.ancestors.include?(root) unless n == root
       assert !n.ancestors.include?(n)
-      next if n.leaf
+      next if n.leaf?
 
       first, *, last = n.children
       assert first.first_child?

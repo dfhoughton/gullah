@@ -92,7 +92,7 @@ class BasicTest < Minitest::Test
     assert_equal 1, parses.length, 'only one parse'
     parse = parses.first
     assert_equal 8, parse.nodes.length, 'there are 8 nodes in the parse'
-    assert parse.nodes.all?(&:leaf), 'all nodes are leaf nodes'
+    assert parse.nodes.all?(&:leaf?), 'all nodes are leaf nodes'
     assert_equal 3, parse.nodes.select { |n| n.name == :ws }.count, 'there are 3 whitespace nodes'
     assert_equal 4, parse.nodes.select(&:ignorable?).count, 'there are 4 ignorable nodes'
     assert_equal 4, parse.nodes.select { |n| n.name == :word }.count, 'there are 4 word nodes'
@@ -392,7 +392,7 @@ class BasicTest < Minitest::Test
     assert parses.length > 1, 'removing the filters gives us many parses'
     assert parses.any?(&:success?), 'there is at least one correct parse'
     assert parses.any?(&:failure?), 'there is at least one failure'
-    n = parses.first(&:failure?).nodes.find(&:failed_test)
+    n = parses.first(&:failure?).nodes.find(&:failed?)
     assert !n.nil?, 'found a node that failed its test'
     assert n.attributes[:failures].any? { |ar| [[:prime], [:nonprime]].include? ar }, 'nature of failure is marked'
   end
