@@ -12,6 +12,8 @@ module Gullah
       @tests = tests
     end
 
+    private
+
     def post_init
       @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end

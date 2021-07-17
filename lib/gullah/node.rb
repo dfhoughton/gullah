@@ -139,6 +139,10 @@ module Gullah
       parent ? parent.root : self
     end
 
+    def root?
+      parent.nil?
+    end
+
     def ancestors
       _ancestors self
     end
@@ -152,12 +156,12 @@ module Gullah
     end
 
     def siblings
-      parent.children if parent
+      parent.children.reject { |n| n == self } if parent
     end
 
     def sibling_index
       if parent
-        @sibling_index ||= parent.children.index_of self
+        @sibling_index ||= parent.children.index self
       end
     end
 
@@ -273,6 +277,10 @@ module Gullah
         yield @n unless @n == @skip
         @n.parent&.send(:_ancestors, @skip)&.each(&block)
       end
+
+      def last
+        @n.root? ? @n : @n.root
+      end
     end
 
     def _descendants(skip)
@@ -293,6 +301,10 @@ module Gullah
             c.send(:_descendants, @skip).each(&block)
           end
         end
+      end
+
+      def last
+        @n.root.leaves.last
       end
     end
 

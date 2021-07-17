@@ -28,10 +28,6 @@ module Gullah
       end
     end
 
-    def post_init
-      @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
-    end
-
     # the subrules that may start a match and their atoms
     def starters
       if subrules
@@ -81,6 +77,12 @@ module Gullah
       else
         atoms.select(&:literal).map(&:seeking).uniq
       end
+    end
+
+    private
+
+    def post_init
+      @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end
   end
 end

@@ -101,7 +101,7 @@ module Gullah
     [@leaves, @rules].flatten.each do |r|
       vetted_tests = r.tests.map { |t| vet t }
       r.instance_variable_set :@tests, vetted_tests
-      r.post_init
+      r.send :post_init
     end
     completeness_check
     loop_check
