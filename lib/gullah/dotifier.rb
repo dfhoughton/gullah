@@ -32,6 +32,7 @@ module Gullah
         parse.nodes.each do |root|
           tree(root, f)
         end
+        # put all the leaves in a row at the bottom
         f.puts
         f.puts "\tsubgraph {"
         f.puts "\t\trank=\"same\""
