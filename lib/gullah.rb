@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-%w[version atom error hopper leaf node trash parse rule iterator].each do |s|
+%w[version atom error hopper leaf node trash parse rule iterator dotifier].each do |s|
   require "gullah/#{s}"
 end
 
