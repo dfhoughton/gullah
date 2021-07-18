@@ -2,7 +2,7 @@
 
 module Gullah
   # a minimal rule fragment; this is where the actual matching occurs
-  class Atom
+  class Atom # :nodoc:
     attr_reader :seeking, :min_repeats, :max_repeats, :parent, :next, :literal
 
     def initialize(atom, parent)

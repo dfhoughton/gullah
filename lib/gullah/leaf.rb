@@ -2,7 +2,7 @@
 
 # a rule used in string tokenization
 module Gullah
-  class Leaf
+  class Leaf # :nodoc:
     attr_reader :rx, :name, :ignorable, :tests, :ancestor_tests
 
     def initialize(name, rx, ignorable: false, tests: [])

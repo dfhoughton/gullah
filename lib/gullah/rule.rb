@@ -2,7 +2,7 @@
 
 # a non-terminal grammatical rule
 module Gullah
-  class Rule
+  class Rule # :nodoc:
     # name -- a symbol identifying the rule
     # body -- preserved for debugging
     # tests -- tests that must be run after a match to determine whether the node is a keeper

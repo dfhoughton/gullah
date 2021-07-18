@@ -251,13 +251,13 @@ module Gullah
 
     ## ADVISORILY PRIVATE
 
-    def _summary=(str)
+    def _summary=(str) # :nodoc:
       @summary = str
     end
 
     # used during parsing
     # make sure we don't have any repeated symbols in a unary branch
-    def _loop_check?(seen = nil)
+    def _loop_check?(seen = nil) # :nodoc:
       return true if seen == name
 
       return false if !@leaf && children.length > 1
@@ -271,27 +271,27 @@ module Gullah
       @leaf ? false : children.first._loop_check?(seen)
     end
 
-    def _attributes=(attributes)
+    def _attributes=(attributes) # :nodoc:
       @attributes = attributes
     end
 
-    def _parent=(other)
+    def _parent=(other) # :nodoc:
       @parent = other
     end
 
-    def _children=(children)
+    def _children=(children) # :nodoc:
       @children = children
     end
 
-    def _descendants(skip)
+    def _descendants(skip) # :nodoc:
       Descendants.new(self, skip)
     end
 
-    def _ancestors(skip)
+    def _ancestors(skip) # :nodoc:
       Ancestors.new(self, skip)
     end
 
-    def _failed_test=(bool)
+    def _failed_test=(bool) # :nodoc:
       @failed_test = bool
     end
 

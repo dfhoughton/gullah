@@ -2,7 +2,7 @@
 
 # a node just for trash
 module Gullah
-  class Trash < Node
+  class Trash < Node # :nodoc:
     def initialize(*args)
       super
       # redundant, but maybe helpful in debugging

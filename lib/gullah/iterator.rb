@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 # for iterating over reductions of a given parse
-# THIS CLASS SHOULD BE TREATED AS PRIVATE
 module Gullah
-  class Iterator
+  class Iterator # :nodoc:
     attr_reader :parse
 
     def initialize(parse, hopper, starters, do_unary_branch_check)

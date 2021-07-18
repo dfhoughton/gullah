@@ -4,7 +4,7 @@
 # a Hopper keeps completed parses, dumping inferior ones as desired
 # this facilitates efficient memory use and parsing
 module Gullah
-  class Hopper
+  class Hopper # :nodoc:
     def initialize(filters, number_sought)
       dross = filters - %i[completion correctness size pending]
       raise Error, "unknown filters: #{dross.join ', '}" if dross.any?
