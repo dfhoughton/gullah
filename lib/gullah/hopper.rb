@@ -5,14 +5,13 @@
 # this facilitates efficient memory use and parsing
 module Gullah
   class Hopper
-    def initialize(filters, batch)
+    def initialize(filters, number_sought)
       dross = filters - %i[completion correctness size pending]
       raise Error, "unknown filters: #{dross.join ', '}" if dross.any?
 
       # fix filter order
       @filters = %i[correctness completion size pending] & filters
-      @batch = batch
-      @count = 0
+      @number_sought = number_sought
       @thresholds = {}
       @bin = []
       @first = true
@@ -24,21 +23,29 @@ module Gullah
     end
     alias length size
 
+    def satisfied?
+      if @bin.length == @number_sought
+        limits = @thresholds.values_at(:correctness, :pending).compact
+        if limits.any? && limits.all? { |n| n.zero? }
+          # we could have accumulated some dross
+          @bin.uniq!(&:summary)
+          @bin.length == @number_sought
+        end
+      end
+    end
+
     def <<(parse)
-      return unless adequate? parse
+      if @bin.empty?
+        init_thresholds parse
+      else
+        return unless adequate? parse
+      end
 
       @bin << parse
-      @count += 1
-      filter if @filters.any? && (@count == @batch)
-      init_thresholds(parse) if @first
+      filter if @filters.any?
     end
 
     def dump
-      if @count.positive? && @filters.any?
-        filter
-      else
-        @bin.uniq!(&:summary)
-      end
       @bin
     end
 
@@ -141,7 +148,6 @@ module Gullah
         @thresholds[f] = limit
         @bin = candidates.reject { |_p, l| l > limit }.map(&:first)
       end
-      @count = 0
     end
   end
 end

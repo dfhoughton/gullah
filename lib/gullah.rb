@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-%w[version atom error hopper leaf node trash parse rule].each { |s| require "gullah/#{s}" }
+%w[version atom error hopper leaf node trash parse rule iterator].each do |s|
+  require "gullah/#{s}"
+end
 
 module Gullah
   # create a rule in an extending class
@@ -41,30 +43,28 @@ module Gullah
     @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
   end
 
-  def parse(text, filters: %i[correctness completion pending size], batch: 10)
+  def parse(text, filters: %i[correctness completion pending size], n: nil)
     commit
-    bases = lex(text)
-    hopper = Hopper.new(filters, batch)
-    while (parse = bases.pop) # the more complete parses will be at the end
-      unless hopper.continuable?(parse)
-        hopper << parse
+    hopper = Hopper.new(filters, n)
+    bases = lex(text).map do |p|
+      Iterator.new(p, hopper, @starters, @do_unary_branch_check)
+    end
+    while (iterator = bases.pop)
+      unless hopper.continuable?(iterator.parse)
+        hopper << iterator.parse
+        return hopper.dump if hopper.satisfied?
+
         next
       end
 
-      any_found = false
-      parse.nodes.each_with_index do |n, i|
-        next unless (rules = @starters[n.name])
-
-        rules.each do |a|
-          next unless (offset = a.match(parse.nodes, i))
-
-          if (p = hopper.vet(parse, i, offset, a.parent, @do_unary_branch_check))
-            any_found = true
-            bases << p
-          end
-        end
+      if (p = iterator.next)
+        bases << iterator
+        bases << Iterator.new(p, hopper, @starters, @do_unary_branch_check)
+      elsif iterator.never_returned_any?
+        # it looks this iterator was based on an unreducible parse
+        hopper << iterator.parse
+        return hopper.dump if hopper.satisfied?
       end
-      hopper << parse unless any_found
     end
     hopper.dump
   end
@@ -263,5 +263,4 @@ end
 # sausagify the parsing; boundary
 # use marker classes rather than attributes
 # ignore instead of ignorable
-# convert to iterator
 # add process named parameter

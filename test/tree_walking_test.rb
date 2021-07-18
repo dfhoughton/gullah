@@ -15,7 +15,7 @@ class TreeWalkingTest < Minitest::Test
     leaf :a, /\S+/
   end
 
-  def test_basic
+  def test_tree_walking
     parses = Binary.parse '1 2 3 4  5 6 7 8  9 10 11 12  13 14 15 16'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
