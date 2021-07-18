@@ -23,7 +23,7 @@ module Gullah
           Atom.new(a, self)
         end
         @atoms.each_with_index do |a, i|
-          a.instance_variable_set :@next, @atoms[i + 1]
+          a._next = @atoms[i + 1]
         end
       end
     end
@@ -79,9 +79,9 @@ module Gullah
       end
     end
 
-    private
+    ## ADVISORILY PRIVATE
 
-    def post_init
+    def _post_init(tests)
       @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end
   end

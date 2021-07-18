@@ -100,8 +100,7 @@ module Gullah
     # vet on commit so rule definition is order-independent
     [@leaves, @rules].flatten.each do |r|
       vetted_tests = r.tests.map { |t| vet t }
-      r.instance_variable_set :@tests, vetted_tests
-      r.send :post_init
+      r._post_init(vetted_tests)
     end
     completeness_check
     loop_check
@@ -259,13 +258,10 @@ module Gullah
   end
 end
 
-=begin
-TODOS
-
-replace all instance_variable_set and send uses (in hot code) with "advisorily private" methods -- _example
-do seen checking before cloning
-sausagify the parsing; boundary
-use marker classes rather than attributes
-ignore instead of ignorable
-convert to iterator
-=end
+# TODOS
+#
+# sausagify the parsing; boundary
+# use marker classes rather than attributes
+# ignore instead of ignorable
+# convert to iterator
+# add process named parameter

@@ -13,10 +13,10 @@ module Gullah
     # produce a clone of this parse with a new node with the given offsets and rule
     def add(s, e, rule, loop_check, trash = false)
       clone.tap do |b|
-        b.instance_variable_set :@nodes, nodes.map(&:clone)
+        b._nodes = nodes.map(&:clone)
         cz = trash ? Trash : Node
         n = cz.new(b, s, e, rule)
-        return nil if loop_check && n.send(:loop_check?)
+        return nil if loop_check && n._loop_check?
 
         if n.leaf?
           b.nodes << n
@@ -73,6 +73,10 @@ module Gullah
 
     def _summary=(str)
       @summary = str
+    end
+
+    def _nodes=(nodes)
+      @nodes = nodes
     end
   end
 end

@@ -12,9 +12,9 @@ module Gullah
       @tests = tests
     end
 
-    private
+    ## ADVISORILY PRIVATE
 
-    def post_init
+    def _post_init(tests)
       @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
     end
   end

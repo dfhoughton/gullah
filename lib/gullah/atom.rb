@@ -94,6 +94,12 @@ module Gullah
       end
     end
 
+    ## ADVISORILY PRIVATE
+
+    def _next=(nxt)
+      @next = nxt
+    end
+
     private
 
     def returnable(nodes, offset)

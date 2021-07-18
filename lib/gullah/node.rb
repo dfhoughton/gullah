@@ -6,6 +6,9 @@ module Gullah
     # TODO: fix this documentation
     attr_reader :parent, :rule, :attributes, :children, :summary
 
+    # an alternative method for when a more telegraphic coding style is useful
+    alias_method :atts, :attributes
+
     def initialize(parse, s, e, rule)
       @rule = rule
       @leaf = rule.is_a?(Leaf) || trash?
@@ -213,11 +216,11 @@ module Gullah
 
     def clone
       super.tap do |c|
-        c.instance_variable_set :@attributes, deep_clone(attributes)
+        c._attributes = deep_clone(attributes)
         unless c.leaf?
-          c.instance_variable_set :@children, deep_clone(children)
+          c._children = deep_clone(children)
           c.children.each do |child|
-            child.instance_variable_set :@parent, c
+            child._parent = c
           end
         end
       end
@@ -252,7 +255,47 @@ module Gullah
       @summary = str
     end
 
-    protected
+    # used during parsing
+    # make sure we don't have any repeated symbols in a unary branch
+    def _loop_check?(seen = nil)
+      return true if seen == name
+
+      return false if !@leaf && children.length > 1
+
+      if seen.nil?
+        # this is the beginning of the check
+        # the only name we need look for is this rule's name, since
+        # all those below it must have passed the check
+        seen = name
+      end
+      @leaf ? false : children.first._loop_check?(seen)
+    end
+
+    def _attributes=(attributes)
+      @attributes = attributes
+    end
+
+    def _parent=(other)
+      @parent = other
+    end
+
+    def _children=(children)
+      @children = children
+    end
+
+    def _descendants(skip)
+      Descendants.new(self, skip)
+    end
+
+    def _ancestors(skip)
+      Ancestors.new(self, skip)
+    end
+
+    def _failed_test=(bool)
+      @failed_test = bool
+    end
+
+    private
 
     def deep_clone(obj)
       case obj
@@ -269,10 +312,6 @@ module Gullah
       end
     end
 
-    def _ancestors(skip)
-      Ancestors.new(self, skip)
-    end
-
     class Ancestors
       include Enumerable
       def initialize(n, skip)
@@ -282,16 +321,12 @@ module Gullah
 
       def each(&block)
         yield @n unless @n == @skip
-        @n.parent&.send(:_ancestors, @skip)&.each(&block)
+        @n.parent&._ancestors(@skip)&.each(&block)
       end
 
       def last
         @n.root? ? @n : @n.root
       end
-    end
-
-    def _descendants(skip)
-      Descendants.new(self, skip)
     end
 
     class Descendants
@@ -305,7 +340,7 @@ module Gullah
         yield @n unless @n == @skip
         unless @n.leaf?
           @n.children.each do |c|
-            c.send(:_descendants, @skip).each(&block)
+            c._descendants(@skip).each(&block)
           end
         end
       end
@@ -317,7 +352,7 @@ module Gullah
 
     # establish parent-child relationship and migrate needs from child to self
     def adopt(n)
-      n.instance_variable_set :@parent, self
+      n._parent = self
       if (pending = n.attributes.delete :pending)
         pending.each do |pair|
           r, l = pair
@@ -337,7 +372,7 @@ module Gullah
             @failed_test = true
             (attributes[:failed_ancestor] ||= []) << [r.name, l, *extra]
             (child.attributes[:failed_descendant] ||= []) << [r.name, position, *extra]
-            child.instance_variable_set :@failed_test, true
+            child._failed_test = true
           else
             raise Error, <<~MSG
               ancestor test #{r.name} returned an unexpected value:
@@ -347,22 +382,6 @@ module Gullah
           end
         end
       end
-    end
-
-    # used during parsing
-    # make sure we don't have any repeated symbols in a unary branch
-    def loop_check?(seen = nil)
-      return true if seen == name
-
-      return false if !@leaf && children.length > 1
-
-      if seen.nil?
-        # this is the beginning of the check
-        # the only name we need look for is this rule's name, since
-        # all those below it must have passed the check
-        seen = name
-      end
-      @leaf ? false : children.first.loop_check?(seen)
     end
   end
 end
