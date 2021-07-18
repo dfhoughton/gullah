@@ -3,7 +3,7 @@
 # a set of nodes
 module Gullah
   class Parse
-    attr_reader :nodes, :text
+    attr_reader :nodes, :text, :summary
 
     def initialize(text)
       @nodes = []
@@ -69,9 +69,10 @@ module Gullah
       end
     end
 
-    # the parse's syntactic structure represented as a string
-    def summary
-      @summary ||= nodes.map(&:summary).join(';')
+    ## ADVISORILY PRIVATE
+
+    def _summary=(str)
+      @summary = str
     end
   end
 end

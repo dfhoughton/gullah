@@ -4,7 +4,7 @@
 module Gullah
   class Node
     # TODO: fix this documentation
-    attr_reader :parent, :rule, :attributes, :children
+    attr_reader :parent, :rule, :attributes, :children, :summary
 
     def initialize(parse, s, e, rule)
       @rule = rule
@@ -246,9 +246,10 @@ module Gullah
       end
     end
 
-    # the node's syntactic structure represented as a string
-    def summary
-      @summary ||= @leaf ? name : "#{name}[#{children.map(&:summary).join(',')}]"
+    ## ADVISORILY PRIVATE
+
+    def _summary=(str)
+      @summary = str
     end
 
     protected

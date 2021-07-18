@@ -58,7 +58,7 @@ module Gullah
         rules.each do |a|
           next unless (offset = a.match(parse.nodes, i))
 
-          if (p = parse.add(i, offset, a.parent, @do_unary_branch_check))
+          if (p = hopper.vet(parse, i, offset, a.parent, @do_unary_branch_check))
             any_found = true
             bases << p
           end
@@ -180,7 +180,7 @@ module Gullah
         e = md.end(0)
         new_parse = parse.add(offset, e, leaf, @do_unary_branch_check)
         if e == text.length
-          done << new_parse
+          done << initialize_summaries(new_parse)
         else
           bases << [e, new_parse]
         end
@@ -196,12 +196,20 @@ module Gullah
       end
       new_parse = parse.add(offset, trash_offset, trash_rule, false, true)
       if trash_offset == text.length
-        done << new_parse
+        done << initialize_summaries(new_parse)
       else
         bases << [trash_offset, new_parse]
       end
     end
     done
+  end
+
+  # it would be conceptually simpler to lazily initialize summaries, but this
+  # gives us a speed boost
+  def initialize_summaries(parse)
+    summary = parse.nodes.each { |n| n._summary = n.name }.map(&:summary).join(';')
+    parse._summary = summary
+    parse
   end
 
   def trash_rule
@@ -250,3 +258,14 @@ module Gullah
     quoted
   end
 end
+
+=begin
+TODOS
+
+replace all instance_variable_set and send uses (in hot code) with "advisorily private" methods -- _example
+do seen checking before cloning
+sausagify the parsing; boundary
+use marker classes rather than attributes
+ignore instead of ignorable
+convert to iterator
+=end

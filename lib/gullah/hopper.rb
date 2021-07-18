@@ -65,9 +65,6 @@ module Gullah
 
     # is this parse worth improving further?
     def continuable?(parse)
-      return false if seen?(parse)
-
-      @seen << parse.summary
       return true if @first || @filters.none?
 
       @thresholds.slice(:correctness, :size).each do |f, limit|
@@ -83,8 +80,22 @@ module Gullah
       true
     end
 
-    def seen?(parse)
-      @seen.include? parse.summary
+    def vet(parse, i, offset, rule, do_unary_branch_check)
+      candidate = "#{rule.name}[#{parse.nodes[i...offset].map(&:summary).join(',')}]"
+      unvetted_summary = [
+        parse.nodes[0...i].map(&:summary) +
+        [candidate] +
+        parse.nodes[offset..].map(&:summary)
+      ].join(';')
+      unless @seen.include? unvetted_summary
+        @seen << unvetted_summary
+        parse.add(i, offset, rule, do_unary_branch_check).tap do |new_parse|
+          if new_parse
+            new_parse._summary= unvetted_summary
+            new_parse.nodes[i]._summary= candidate
+          end
+        end
+      end
     end
 
     private
