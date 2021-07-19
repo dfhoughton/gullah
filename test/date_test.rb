@@ -14,13 +14,17 @@ class DateTest < Minitest::Test
     rule :american, 'month "/" day "/" year', tests: %i[sane]
     rule :euro, 'day "/" month "/" year', tests: %i[sane]
 
-    leaf :day, /\b\d{1,2}\b/, tests: %i[day]
-    leaf :month, /\b\d{1,2}\b/, tests: %i[month]
-    leaf :year, /\b\d+\b/
+    leaf :day, /\b\d{1,2}\b/, tests: %i[day], process: :to_i
+    leaf :month, /\b\d{1,2}\b/, tests: %i[month], process: :to_i
+    leaf :year, /\b\d+\b/, process: :to_i
+
+    def to_i(n)
+      n.atts[:value] = n.text.to_i
+    end
 
     def month(root, n)
       if root == n.parent
-        month = n.text.to_i
+        month = n.atts[:value]
         if month < 1
           [:fail, 'month must be greater than 0']
         elsif month > 12
@@ -33,7 +37,7 @@ class DateTest < Minitest::Test
 
     def day(root, n)
       if root == n.parent
-        day = n.text.to_i
+        day = n.atts[:value]
         if day < 1
           [:fail, 'day must be greater than 0']
         elsif day > 31
@@ -50,7 +54,7 @@ class DateTest < Minitest::Test
       year = n.descendants.find { |o| o.name == :year }
       if day && month && year
         begin
-          Date.new year.text.to_i, month.text.to_i, day.text.to_i
+          Date.new year.atts[:value], month.atts[:value], day.atts[:value]
         rescue ArgumentError
           return [
             :fail,

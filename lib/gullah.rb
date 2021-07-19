@@ -8,13 +8,14 @@ module Gullah
   # create a rule in an extending class
   #
   # rule :noun, "det n_bar"
-  def rule(name, body, tests: [])
+  def rule(name, body, tests: [], process: nil)
     init
     init_check(name)
     name = name.to_sym
     body = body.to_s.strip.gsub(/\s+/, ' ')
     return if dup_check(:rule, name, body, tests)
 
+    tests << [process] if process
     r = Rule.new name, body, tests: tests
     subrules = r.subrules || [r]
     subrules.each do |sr|
@@ -34,12 +35,13 @@ module Gullah
   end
 
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
-  def leaf(name, rx, ignorable: false, tests: [])
+  def leaf(name, rx, ignorable: false, tests: [], process: nil)
     init
     init_check(name)
     name = name.to_sym
     return if dup_check(:leaf, name, rx, tests)
 
+    tests << [process] if process
     @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
   end
 
@@ -234,6 +236,10 @@ module Gullah
 
   # vet tests
   def vet(test)
+    if test.is_a? Array
+      # this is a processing function, not a real test
+      return procify(test.first)
+    end
     @tests[test] ||= begin
       begin
         m = singleton.method(test)
@@ -256,6 +262,31 @@ module Gullah
     end
     quoted
   end
+
+  def procify(processor)
+    if processor.is_a? Symbol
+      @tests[processor] ||= begin
+        begin
+          m = singleton.method(processor)
+        rescue ::NameError
+          raise Error, "#{processor} is not defined"
+        end
+        raise Error, "#{processor} can only take a single argument" unless m.arity == 1
+
+        lambda { |n|
+          m.call(n) unless n.error?
+          return :ignore
+        }
+      end
+    elsif processor.is_a? Proc
+      lambda { |n|
+        proc.call(n) unless n.error?
+        return :ignore
+      }
+    else
+      raise Error, "a node processor can only be a proc or a symbol"
+    end
+  end
 end
 
 # TODOS
@@ -263,4 +294,3 @@ end
 # sausagify the parsing; boundary
 # use marker classes rather than attributes
 # ignore instead of ignorable
-# add process named parameter

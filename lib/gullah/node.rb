@@ -32,6 +32,7 @@ module Gullah
           when :fail
             @failed_test = true
             (attributes[:failures] ||= []) << [t.name, *extra]
+            break
           else
             raise Error, <<~MSG
               test #{t.name} returned an unexpected value:
