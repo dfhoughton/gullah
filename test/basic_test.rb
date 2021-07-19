@@ -275,6 +275,7 @@ class BasicTest < Minitest::Test
     root = parse.nodes.first
     assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
     parses = RightAncestor.parse 'bar foo'
+    Gullah::Dotifier.dot parses.first, "bad_ancestor", make_it: :so
     assert_equal 0, good(parses).length, "no good parses of 'bar foo'"
   end
 

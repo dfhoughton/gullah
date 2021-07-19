@@ -25,6 +25,7 @@ module Gullah
     private
 
     def dot(parse, file, make_it)
+      @edges = {}
       File.open file, 'w' do |f|
         f.puts 'graph {'
         f.puts "\tnode[shape=none]"
@@ -48,11 +49,54 @@ module Gullah
     def tree(node, f)
       return if node.ignorable?
 
-      f.puts "\t#{name(node)} [label=#{(node.leaf? ? node.text : node.name.to_s).inspect}]"
+      f.puts "\t#{name(node)} #{node_attributes(node)}"
+      Array(node.atts[:satisfied_ancestor]).each do |_, loc, *|
+        child = node.find loc
+        add_edge node, child, :success, true
+      end
+      Array(node.atts[:failed_ancestor]).each do |_, loc, *|
+        child = node.find loc
+        add_edge node, child, :error, true
+      end
       Array(node.children&.reject(&:ignorable?)).each do |child|
-        f.puts "\t#{name(node)} -- #{name(child)}"
+        f.puts "\t#{name(node)} -- #{name(child)}#{edge_attributes node, child}"
         tree(child, f)
       end
+    end
+
+    def add_edge(parent, child, property, value)
+      while parent != child
+        middle = parent.children.find { |c| c.contains? child.start }
+        (@edges[[parent.position, middle.position]] ||= {})[property] = value
+        parent = middle
+      end
+    end
+
+    def edge_attributes(node, child)
+      atts = []
+      if (properties = @edges[[node.position, child.position]])
+        if properties[:error]
+          atts << "color=red"
+        elsif properties[:success]
+          atts << "color=green"
+        end
+      end
+      " [#{atts.join(';')}]" if atts.any?
+    end
+
+    def node_attributes(node)
+      atts = ["label=#{(node.leaf? ? node.text : node.name.to_s).inspect}"]
+      if node.trash?
+        atts << "color=red"
+        atts << "shape=box"
+      elsif node.error?
+        atts << "color=red"
+        atts << "shape=oval"
+      elsif node.atts[:satisfied_ancestor] || node.atts[:satisfied_descendant]
+        atts << "color=green"
+        atts << "shape=oval"
+      end
+      "[#{atts.join(';')}]"
     end
 
     def name(node)

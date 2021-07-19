@@ -71,11 +71,13 @@ module Gullah
 
     ## ADVISORILY PRIVATE
 
-    def _summary=(str) # :nodoc:
+    # :stopdoc:
+
+    def _summary=(str)
       @summary = str
     end
 
-    def _nodes=(nodes) # :nodoc:
+    def _nodes=(nodes)
       @nodes = nodes
     end
   end

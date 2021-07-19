@@ -8,7 +8,7 @@ module Gullah
     # tests -- tests that must be run after a match to determine whether the node is a keeper
     # ancestor_tests -- tests that must be run after an ancestor match
     # subrules/atoms -- if you have no subrules, you have a sequence of atoms
-    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms, :next
+    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms
 
     def initialize(name, body, tests: [])
       @name = name

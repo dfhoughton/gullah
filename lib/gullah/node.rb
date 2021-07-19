@@ -9,7 +9,7 @@ module Gullah
     # an alternative method for when a more telegraphic coding style is useful
     alias_method :atts, :attributes
 
-    def initialize(parse, s, e, rule)
+    def initialize(parse, s, e, rule) # :nodoc:
       @rule = rule
       @leaf = rule.is_a?(Leaf) || trash?
       @text = parse.text
@@ -64,7 +64,11 @@ module Gullah
     end
 
     def failed?
-      trash? || @failed_test
+      trash? || error?
+    end
+
+    def error?
+      @failed_test
     end
 
     # does this node's subtree contain unsatisfied syntactic requirements?
@@ -250,6 +254,8 @@ module Gullah
     end
 
     ## ADVISORILY PRIVATE
+
+    # :stopdoc:
 
     def _summary=(str) # :nodoc:
       @summary = str
