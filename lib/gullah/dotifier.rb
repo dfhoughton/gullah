@@ -76,9 +76,9 @@ module Gullah
       atts = []
       if (properties = @edges[[node.position, child.position]])
         if properties[:error]
-          atts << "color=red"
+          atts << 'color=red'
         elsif properties[:success]
-          atts << "color=green"
+          atts << 'color=green'
         end
       end
       " [#{atts.join(';')}]" if atts.any?
@@ -87,14 +87,14 @@ module Gullah
     def node_attributes(node)
       atts = ["label=#{(node.leaf? ? node.text : node.name.to_s).inspect}"]
       if node.trash?
-        atts << "color=red"
-        atts << "shape=box"
+        atts << 'color=red'
+        atts << 'shape=box'
       elsif node.error?
-        atts << "color=red"
-        atts << "shape=oval"
+        atts << 'color=red'
+        atts << 'shape=oval'
       elsif node.atts[:satisfied_ancestor] || node.atts[:satisfied_descendant]
-        atts << "color=green"
-        atts << "shape=oval"
+        atts << 'color=green'
+        atts << 'shape=oval'
       end
       "[#{atts.join(';')}]"
     end

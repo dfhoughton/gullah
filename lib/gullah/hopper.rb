@@ -36,7 +36,7 @@ module Gullah
 
     def <<(parse)
       if @bin.empty?
-        init_thresholds parse
+        set_thresholds parse
       else
         return unless adequate? parse
       end
@@ -64,7 +64,11 @@ module Gullah
                 when :pending
                   parse.pending_count
                 end
-        return true if value < limit
+        if value < limit
+          # we have a new champion!
+          set_thresholds(parse)
+          return true
+        end
         return false if value > limit
       end
       true
@@ -107,7 +111,7 @@ module Gullah
 
     private
 
-    def init_thresholds(parse)
+    def set_thresholds(parse)
       @filters.each do |f|
         value = case f
                 when :completion
