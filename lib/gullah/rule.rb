@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# a non-terminal grammatical rule
 module Gullah
+  # a non-terminal grammatical rule
   class Rule # :nodoc:
     # name -- a symbol identifying the rule
     # body -- preserved for debugging

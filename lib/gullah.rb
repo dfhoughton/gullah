@@ -4,6 +4,29 @@
   require "gullah/#{s}"
 end
 
+# A collection of class methods that can be added into a class to make it parser.
+# For example:
+#
+#   class Foo
+#     extend Gullah
+#
+#     rule :plugh, 'foo bar+ | bar foo{1,3}'
+#     rule :foo, 'number word'
+#     rule :bar, 'punctuation "wow!"'
+#     leaf :word, /[a-z]+/i
+#     leaf :number, /\d+(?:\.\d+)?/
+#     leaf :punctuation, /[^\w\s]+/
+#   end
+#
+# Having defined a grammar like this, one can apply it to arbitrary strings to
+# generate parse trees:
+#
+#   Foo.parse "123 cat @#$ wow! ___wow!"
+#
+# Gullah can produce parse trees from incomplete or ambiguous grammars. It can handle
+# noisy data. One can apply arbitrary tests to parse nodes, including tests that
+# depend on other nodes in the parse tree. In the case of test failure the nature
+# of the failure is marked on the corresponding nodes in the parse tree. 
 module Gullah
   # create a rule in an extending class
   #
@@ -29,20 +52,38 @@ module Gullah
     end
   end
 
-  # don't make whitespace automatically ignorable
+  # Don't make whitespace automatically ignorable.
+  #
+  #   class Foo
+  #     extend Gullah
+  #
+  #     keep_whitespace
+  #
+  #     rule :a, 'a+'
+  #     leaf :a, /a/
+  #   end
+  #
+  #   Foo.parse "aaa aaa"
+  #
+  # In this example, the parse tree would consist of two a nodes, each parent to three 'a' leaves,
+  # separated by a "trash" node corresponding to the whitespace, for which no leaf rule was provided.
   def keep_whitespace
     @keep_whitespace = true
   end
 
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
-  def leaf(name, rx, ignorable: false, tests: [], process: nil)
-    init
-    init_check(name)
-    name = name.to_sym
-    return if dup_check(:leaf, name, rx, tests)
+  def leaf(name, rx, tests: [], process: nil)
+    _leaf name, rx, ignorable: false, tests: tests, process: process
+  end
 
-    tests << [process] if process
-    @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
+  # A tokenization rule like `leaf`, but whose tokens are invisible to other rules.
+  # The `ignore` method is otherwise identical to `leaf`.
+  #
+  # Unless `keep_whitespace` is called, an `ignore` rule covering whitespace will be
+  # generated automatically. It's name will be "_ws", or, if that is taken, "_wsN", where
+  # N is an integer sufficient to make this name unique among the rules of the grammar.
+  def ignore(name, rx, tests: [], process: nil)
+    _leaf name, rx, ignorable: true, tests: tests, process: process
   end
 
   def parse(text, filters: %i[correctness completion pending size], n: nil)
@@ -71,6 +112,8 @@ module Gullah
     hopper.dump
   end
 
+  # :stopdoc:
+
   private
 
   def init
@@ -96,7 +139,7 @@ module Gullah
       base = '_ws'
       count = nil
       count = count.to_i + 1 while used_rules.include? "#{base}#{count}".to_sym
-      leaf "#{base}#{count}".to_sym, /\s+/, ignorable: true
+      _leaf "#{base}#{count}".to_sym, /\s+/, ignorable: true
     end
 
     # vet on commit so rule definition is order-independent
@@ -164,6 +207,17 @@ module Gullah
 
   def init_check(name)
     raise Error, "cannot define #{name}; all rules must be defined before parsing" if @committed
+  end
+
+  # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
+  def _leaf(name, rx, ignorable: false, tests: [], process: nil)
+    init
+    init_check(name)
+    name = name.to_sym
+    return if dup_check(:leaf, name, rx, tests)
+
+    tests << [process] if process
+    @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
   end
 
   # convert raw text into one or more strings of leaf nodes
@@ -294,5 +348,3 @@ end
 # TODOS
 #
 # sausagify the parsing; boundary
-# use marker classes rather than attributes
-# ignore instead of ignorable

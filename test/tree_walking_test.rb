@@ -5,6 +5,8 @@ require 'minitest/autorun'
 require 'gullah'
 require 'byebug'
 
+# :stopdoc:
+
 # test all the tree walking methods on node
 class TreeWalkingTest < Minitest::Test
   class Binary

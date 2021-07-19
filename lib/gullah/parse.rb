@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-# a set of nodes
 module Gullah
+  # a set of nodes
   class Parse
     attr_reader :nodes, :text, :summary
 
-    def initialize(text)
+    def initialize(text) # :nodoc:
       @nodes = []
       @text = text
     end
 
     # produce a clone of this parse with a new node with the given offsets and rule
-    def add(s, e, rule, loop_check, trash = false)
+    def add(s, e, rule, loop_check, trash = false) # :nodoc:
       clone.tap do |b|
         b._nodes = nodes.map(&:clone)
         cz = trash ? Trash : Node
@@ -61,7 +61,7 @@ module Gullah
       nodes.map { |n| n.dbg so: so }
     end
 
-    def clone
+    def clone # :nodoc:
       super.tap do |c|
         %i[@summary @size @correctness_count @pending_count].each do |v|
           c.remove_instance_variable v if c.instance_variable_get v

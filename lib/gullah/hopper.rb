@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# to be regarded as a non-public class
-# a Hopper keeps completed parses, dumping inferior ones as desired
-# this facilitates efficient memory use and parsing
 module Gullah
+  # to be regarded as a non-public class
+  # a Hopper keeps completed parses, dumping inferior ones as desired
+  # this facilitates efficient memory use and parsing
   class Hopper # :nodoc:
     def initialize(filters, number_sought)
       dross = filters - %i[completion correctness size pending]

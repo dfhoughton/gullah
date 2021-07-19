@@ -5,6 +5,8 @@ require 'minitest/autorun'
 require 'gullah'
 require 'byebug'
 
+# :stopdoc:
+
 # tests that all the errors that should be raised are raised
 class ErrorTest < Minitest::Test
   class NoLeaf
@@ -51,7 +53,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz'
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_add_after_parse_1
@@ -68,7 +69,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz'
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_add_after_parse_2
@@ -85,7 +85,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz', tests: %i[undefined]
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_undefined_test
@@ -101,7 +100,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz', tests: %i[bad]
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
 
     def bad
       puts 'I have no arguments at all!'
@@ -121,7 +119,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz', tests: %i[bad]
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
 
     def bad(_root, _node, _other, _things)
       puts 'I have too many arguments!'
@@ -140,7 +137,6 @@ class ErrorTest < Minitest::Test
 
     leaf :'bar@', /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_misnamed_rule
@@ -155,7 +151,6 @@ class ErrorTest < Minitest::Test
 
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_bad_suffix_rule
@@ -171,7 +166,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz'
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
   end
 
   def test_filters
@@ -187,7 +181,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz', tests: %i[foo]
     leaf :bar, /bar/
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
 
     def foo(_n)
       :foo
@@ -207,7 +200,6 @@ class ErrorTest < Minitest::Test
     rule :foo, 'bar baz'
     leaf :bar, /bar/, tests: %i[foo]
     leaf :baz, /baz/
-    leaf :ws, /\s+/, ignorable: true
 
     def foo(_root, _n)
       :foo

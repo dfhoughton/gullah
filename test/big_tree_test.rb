@@ -5,6 +5,8 @@ require 'minitest/autorun'
 require 'gullah'
 require 'byebug'
 
+# :stopdoc:
+
 # to verify that we can make one parse quickly even for a big tree
 class BigTreeTest < Minitest::Test
   class Binary

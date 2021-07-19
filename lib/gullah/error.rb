@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# something to identify Gullah errors
 module Gullah
+  # something to identify Gullah errors
   class Error < ::StandardError
   end
 end

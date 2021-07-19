@@ -25,7 +25,8 @@ A simple, fault-tolerant bottom-up parser written in Ruby.
     leaf :prepositions, /\b(on|in|around|above|beside)\b/i
     leaf :verbs, /\b(sat|slept|moped)\b/
     leaf :adjectives, /\b(big|small|hairy|bald)\b/i
-    leaf :whatever, /\W+/, ignorable: true
+
+    ignore :whatever, /[^\w\s]+/
   end
 
   def test_cat
@@ -52,7 +53,7 @@ recursive structures. I wanted to create a better parser that could handle all t
 languages. Since this was an evolution from pidgin, I wanted to call it creole.
 
 Well, "creole" was taken. So I chose among the names of creoles of I knew of. Gullah is a creole of English and various
-Central and West African languagees. I thought the name "Gullah" was cool and I like the way Gullah sounds, so I picked "Gullah".
+Central and West African languages. I thought the name "Gullah" was cool and I like the way Gullah sounds, so I picked "Gullah".
 
 I hope this causes no offense to speakers of Gullah.
 

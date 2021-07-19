@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# a node in an AST
 module Gullah
+  # a node in an AST
   class Node
     # TODO: fix this documentation
     attr_reader :parent, :rule, :attributes, :children, :summary
@@ -246,6 +246,7 @@ module Gullah
         simpleton[:failed] = true if @failed_test
         simpleton[:attributes] = deep_clone attributes if attributes.any?
         if leaf?
+          simpleton[:trash] = true if trash?
           simpleton[:ignorable] = true unless so || significant?
           simpleton[:text] = text
         else

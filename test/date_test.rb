@@ -6,6 +6,8 @@ require 'gullah'
 require 'byebug'
 require 'date'
 
+# :stopdoc:
+
 class DateTest < Minitest::Test
   class DateGrammar
     extend Gullah

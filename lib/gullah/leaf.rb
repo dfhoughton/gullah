@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# a rule used in string tokenization
 module Gullah
+  # a rule used in string tokenization
   class Leaf # :nodoc:
     attr_reader :rx, :name, :ignorable, :tests, :ancestor_tests
 

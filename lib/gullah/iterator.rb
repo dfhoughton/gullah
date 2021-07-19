@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# for iterating over reductions of a given parse
 module Gullah
+  # for iterating over reductions of a given parse
   class Iterator # :nodoc:
     attr_reader :parse
 

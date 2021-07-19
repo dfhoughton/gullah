@@ -5,6 +5,8 @@ require 'minitest/autorun'
 require 'gullah'
 require 'byebug'
 
+# :stopdoc:
+
 class BasicTest < Minitest::Test
   class Simple
     extend Gullah
@@ -84,7 +86,7 @@ class BasicTest < Minitest::Test
     keep_whitespace
 
     leaf :word, /\w+/
-    leaf :ws, /\s+/, ignorable: true
+    ignore :ws, /\s+/
   end
 
   def test_trash
@@ -99,7 +101,6 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.nodes.select(&:trash?).count, 'there is 1 trash node'
     last_node = parse.nodes.last
     assert last_node.trash?, 'the last node is the trash node'
-    assert_equal true, last_node.attributes[:trash], 'the trash node has an attribute marking it as such'
   end
 
   # TODO: order dependence problem
@@ -123,7 +124,7 @@ class BasicTest < Minitest::Test
     leaf :prepositions, /\b(on|in|around|above|beside)\b/i
     leaf :verbs, /\b(sat|slept|moped)\b/
     leaf :adjectives, /\b(big|small|hairy|bald)\b/i
-    leaf :whatever, /[^\w\s]+/, ignorable: true
+    ignore :whatever, /[^\w\s]+/
   end
 
   def test_cat

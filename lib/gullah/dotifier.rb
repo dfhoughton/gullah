@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-# A little tool to help visualize a parse tree. It generates .dot files
-# parsable by graphviz. If you have graphviz installed, you may be able
-# to invoke it like so and generate a .png file
-#
-#   Gullah::Dotifier.dot parses.first, "tree", make_it: :so
-#
-# This will generate a file called tree.png showing the parse tree. If you
-# don't have graphviz, or perhaps if you're on a machine which doesn't like
-# the command this generates -- I suspect Windows doesn't -- you can skip
-# the named argument and just generate the dot file which you can feed into
-# graphviz some other way.
-#
-# I make no guarantees about this utility. You may want to build your own,
-# in which case this may serve as a simple prototype.
 module Gullah
+  # A little tool to help visualize a parse tree. It generates .dot files
+  # parsable by graphviz. If you have graphviz installed, you may be able
+  # to invoke it like so and generate a .png file
+  #
+  #   Gullah::Dotifier.dot parses.first, "tree", make_it: :so
+  #
+  # This will generate a file called tree.png showing the parse tree. If you
+  # don't have graphviz, or perhaps if you're on a machine which doesn't like
+  # the command this generates -- I suspect Windows doesn't -- you can skip
+  # the named argument and just generate the dot file which you can feed into
+  # graphviz some other way.
+  #
+  # I make no guarantees about this utility. You may want to build your own,
+  # in which case this may serve as a simple prototype.
   class Dotifier
     def self.dot(parse, file, make_it: false, type: 'png')
       new.send :dot, parse, file, make_it, type
