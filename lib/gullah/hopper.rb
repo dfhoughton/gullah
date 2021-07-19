@@ -42,7 +42,6 @@ module Gullah
       end
 
       @bin << parse
-      filter if @filters.any?
     end
 
     def dump
@@ -67,6 +66,7 @@ module Gullah
         if value < limit
           # we have a new champion!
           set_thresholds(parse)
+          @bin.select! { |p| adequate? p }
           return true
         end
         return false if value > limit
@@ -126,32 +126,6 @@ module Gullah
         @thresholds[f] = value
       end
       @first = false
-    end
-
-    # set new minimal thresholds and cull the losers
-    def filter
-      @bin.uniq!(&:summary)
-      @filters.each do |f|
-        break if @bin.length == 1
-
-        case f
-        when :completion
-          # find the parses with the fewest terminal nodes
-          candidates = @bin.map { |p| [p, p.length] }
-        when :correctness
-          # find the parses with the fewest failures
-          candidates = @bin.map { |p| [p, p.correctness_count] }
-        when :size
-          # find the parses with the fewest nodes
-          candidates = @bin.map { |p| [p, p.size] }
-        when :pending
-          # find the parses with the fewest pending ancestor tests
-          candidates = @bin.map { |p| [p, p.pending_count] }
-        end
-        limit = candidates.map(&:last).min
-        @thresholds[f] = limit
-        @bin = candidates.reject { |_p, l| l > limit }.map(&:first)
-      end
     end
   end
 end
