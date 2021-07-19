@@ -9,22 +9,22 @@
 # This will generate a file called tree.png showing the parse tree. If you
 # don't have graphviz, or perhaps if you're on a machine which doesn't like
 # the command this generates -- I suspect Windows doesn't -- you can skip
-# the named argument and just generate the .dot file which you can feed into
+# the named argument and just generate the dot file which you can feed into
 # graphviz some other way.
 #
 # I make no guarantees about this utility. You may want to build your own,
 # in which case this may serve as a simple prototype.
 module Gullah
   class Dotifier
-    def self.dot(parse, file, make_it: false)
-      new.send :dot, parse, file, make_it
+    def self.dot(parse, file, make_it: false, type: 'png')
+      new.send :dot, parse, file, make_it, type
     end
 
     # making the guts private to simplify the API
 
     private
 
-    def dot(parse, file, make_it)
+    def dot(parse, file, make_it, type)
       @edges = {}
       File.open file, 'w' do |f|
         f.puts 'graph {'
@@ -43,7 +43,7 @@ module Gullah
         f.puts "\t}"
         f.puts '}'
       end
-      `dot -Tpng -o#{file}.png #{file}` if make_it
+      `dot -T#{type} -o#{file}.#{type} #{file}` if make_it
     end
 
     def tree(node, f)
