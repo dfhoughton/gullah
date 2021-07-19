@@ -240,6 +240,7 @@ module Gullah
       # this is a processing function, not a real test
       return procify(test.first)
     end
+
     @tests[test] ||= begin
       begin
         m = singleton.method(test)
@@ -264,7 +265,8 @@ module Gullah
   end
 
   def procify(processor)
-    if processor.is_a? Symbol
+    case processor
+    when Symbol
       @tests[processor] ||= begin
         begin
           m = singleton.method(processor)
@@ -278,13 +280,13 @@ module Gullah
           return :ignore
         }
       end
-    elsif processor.is_a? Proc
+    when Proc
       lambda { |n|
-        proc.call(n) unless n.error?
+        processor.call(n) unless n.error?
         return :ignore
       }
     else
-      raise Error, "a node processor can only be a proc or a symbol"
+      raise Error, 'a node processor can only be a proc or a symbol'
     end
   end
 end

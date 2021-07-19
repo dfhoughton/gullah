@@ -16,7 +16,8 @@ class DateTest < Minitest::Test
 
     leaf :day, /\b\d{1,2}\b/, tests: %i[day], process: :to_i
     leaf :month, /\b\d{1,2}\b/, tests: %i[month], process: :to_i
-    leaf :year, /\b\d+\b/, process: :to_i
+    # to confirm that we can pass a proc as a processor
+    leaf :year, /\b\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_i }
 
     def to_i(n)
       n.atts[:value] = n.text.to_i
