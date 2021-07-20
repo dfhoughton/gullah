@@ -12,9 +12,9 @@ module Gullah
       @do_unary_branch_check = do_unary_branch_check
       @returned_any = false
       # this iterator iterates over both node indices and rule indices
-      @node_index = 0
+      @root_index = 0
       @rule_index = 0
-      @node = parse.nodes[0]
+      @node = parse.roots[0]
     end
 
     # return the next reduction, if any
@@ -23,11 +23,11 @@ module Gullah
         return nil unless (a = current_rule)
 
         @rule_index += 1
-        unless (offset = a.match(parse.nodes, @node_index))
+        unless (offset = a.match(parse.roots, @root_index))
           next
         end
 
-        if (p = @hopper.vet(parse, @node_index, offset, a.parent, @do_unary_branch_check))
+        if (p = @hopper.vet(parse, @root_index, offset, a.parent, @do_unary_branch_check))
           @returned_any = true
           return p
         end
@@ -48,8 +48,8 @@ module Gullah
 
         # the rules for this node are used up; try the next one
         @rule_index = 0
-        @node_index += 1
-        @node = parse.nodes[@node_index]
+        @root_index += 1
+        @node = parse.roots[@root_index]
         @rules = nil
       end
     end

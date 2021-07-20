@@ -30,14 +30,14 @@ module Gullah
         f.puts 'graph {'
         f.puts "\tnode[shape=none]"
         f.puts
-        parse.nodes.each do |root|
+        parse.roots.each do |root|
           tree(root, f)
         end
         # put all the leaves in a row at the bottom
         f.puts
         f.puts "\tsubgraph {"
         f.puts "\t\trank=\"same\""
-        parse.nodes.flat_map(&:leaves).reject(&:ignorable?).each do |leaf|
+        parse.roots.flat_map(&:leaves).reject(&:ignorable?).each do |leaf|
           f.puts "\t\t#{name(leaf)}"
         end
         f.puts "\t}"

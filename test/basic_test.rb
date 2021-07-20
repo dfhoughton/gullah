@@ -20,8 +20,8 @@ class BasicTest < Minitest::Test
     parses = Simple.parse 'foo bar baz'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'parse has a root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'parse has a root node'
+    root = parse.roots.first
     assert_equal :a, root.name, 'root node has the right label'
     assert_equal 6, root.subtree.count, 'parse has the expected number of nodes'
     assert_equal 4, root.subtree.count(&:significant?),
@@ -40,8 +40,8 @@ class BasicTest < Minitest::Test
     parses = FixedCount.parse 'foo bar baz'
     assert_equal 2, parses.length, '2 optimal parses'
     parses.each do |p|
-      assert_equal 1, p.nodes.length, 'parse has a root node'
-      root = p.nodes.first
+      assert_equal 1, p.roots.length, 'parse has a root node'
+      root = p.roots.first
       assert_equal 2, root.subtree.select(&:nonterminal?).count, 'parse has 2 nonterminal nodes'
       assert root.subtree.select(&:nonterminal?).each do |_n|
         assert_equal 2, b.children.length, 'nonterminal nodes each have 2 children'
@@ -70,8 +70,8 @@ class BasicTest < Minitest::Test
     parses = Balanced.parse 'foo bar baz plugh'
     assert_equal 1, parses.length, '1 optimal parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'parse has a root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'parse has a root node'
+    root = parse.roots.first
     assertion = root.subtree
                     .select(&:nonterminal?)
                     .select { |n| n.name == :a }.all? do |n|
@@ -93,13 +93,13 @@ class BasicTest < Minitest::Test
     parses = Trash.parse 'There may be punctuation.'
     assert_equal 1, parses.length, 'only one parse'
     parse = parses.first
-    assert_equal 8, parse.nodes.length, 'there are 8 nodes in the parse'
-    assert parse.nodes.all?(&:leaf?), 'all nodes are leaf nodes'
-    assert_equal 3, parse.nodes.select { |n| n.name == :ws }.count, 'there are 3 whitespace nodes'
-    assert_equal 4, parse.nodes.select(&:ignorable?).count, 'there are 4 ignorable nodes'
-    assert_equal 4, parse.nodes.select { |n| n.name == :word }.count, 'there are 4 word nodes'
-    assert_equal 1, parse.nodes.select(&:trash?).count, 'there is 1 trash node'
-    last_node = parse.nodes.last
+    assert_equal 8, parse.roots.length, 'there are 8 nodes in the parse'
+    assert parse.roots.all?(&:leaf?), 'all nodes are leaf nodes'
+    assert_equal 3, parse.roots.select { |n| n.name == :ws }.count, 'there are 3 whitespace nodes'
+    assert_equal 4, parse.roots.select(&:ignorable?).count, 'there are 4 ignorable nodes'
+    assert_equal 4, parse.roots.select { |n| n.name == :word }.count, 'there are 4 word nodes'
+    assert_equal 1, parse.roots.select(&:trash?).count, 'there is 1 trash node'
+    last_node = parse.roots.last
     assert last_node.trash?, 'the last node is the trash node'
   end
 
@@ -131,8 +131,8 @@ class BasicTest < Minitest::Test
     parses = Cat.parse 'The cat sat on the mat.'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
-    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.roots.first
     assert_equal :S, root.name, 'the root node is a sentence'
     vp = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
     assert_equal 'sat', vp&.text, 'we have the expected verb'
@@ -152,8 +152,8 @@ class BasicTest < Minitest::Test
     parses = SubRules.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
-    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.roots.first
     assert_equal :s, root.name, 'found expected root'
     assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
     assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
@@ -178,8 +178,8 @@ class BasicTest < Minitest::Test
     parses = SubRulesWithTest.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
-    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.roots.first
     assert_equal :s, root.name, 'found expected root'
     things = root.subtree.select { |n| n.name == :thing }
     assert_equal 2, things.count, 'two things'
@@ -206,8 +206,8 @@ class BasicTest < Minitest::Test
     parses = SubRulesWithAncestorTest.parse '123 word'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
-    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.reject(&:ignorable?).count, 'there is a root node for this parse'
+    root = parse.roots.first
     assert_equal :s, root.name, 'found expected root'
     things = root.subtree.select { |n| n.name == :thing }
     assert_equal 2, things.count, 'two things'
@@ -243,8 +243,8 @@ class BasicTest < Minitest::Test
     parses = LeftAncestor.parse 'bar foo'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'one root for parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'one root for parse'
+    root = parse.roots.first
     assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
     parses = LeftAncestor.parse 'foo bar'
     assert_equal 0, good(parses).length, "no good parses of 'foo bar'"
@@ -272,8 +272,8 @@ class BasicTest < Minitest::Test
     parses = RightAncestor.parse 'foo bar'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'one root for parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'one root for parse'
+    root = parse.roots.first
     assert_equal 1, root.subtree.count { |n| n.name == :foo }, 'one foo'
     parses = RightAncestor.parse 'bar foo'
     assert_equal 0, good(parses).length, "no good parses of 'bar foo'"
@@ -359,7 +359,7 @@ class BasicTest < Minitest::Test
     assert_equal 1, good(parses).length, 'it parses'
     parse = parses.first
     assert_equal 1, parse.length, "there's a root node"
-    root = parse.nodes.first
+    root = parse.roots.first
     assert_equal 2, root.leaves.count, 'there are two leaves'
     assert_equal '$', root.leaves.first.text, "the first leaf is '$'"
     assert_equal '12', root.leaves.last.text, "the last leaf is '12'"
@@ -393,7 +393,7 @@ class BasicTest < Minitest::Test
     assert parses.length > 1, 'removing the filters gives us many parses'
     assert parses.any?(&:success?), 'there is at least one correct parse'
     assert parses.any?(&:failure?), 'there is at least one failure'
-    n = parses.first(&:failure?).nodes.find(&:failed?)
+    n = parses.first(&:failure?).roots.find(&:failed?)
     assert !n.nil?, 'found a node that failed its test'
     assert n.attributes[:failures].any? { |ar| [[:prime], [:nonprime]].include? ar }, 'nature of failure is marked'
   end
@@ -414,7 +414,7 @@ class BasicTest < Minitest::Test
     assert_equal 1, parses.length, 'got one good parse'
     parse = parses.first
     assert_equal 1, parse.length, 'got one root node'
-    root = parse.nodes.first
+    root = parse.roots.first
     noun = root.subtree.find { |n| n.name == :noun }
     assert !noun.nil?, 'found a noun'
     assert_equal 'walk', noun.text, "the noun is 'walk'"

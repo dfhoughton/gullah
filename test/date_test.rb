@@ -75,8 +75,8 @@ class DateTest < Minitest::Test
     parses = DateGrammar.parse '2010/5/6'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'one root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'one root node'
+    root = parse.roots.first
     assert_equal :iso, root.name, 'got an iso date'
   end
 
@@ -84,8 +84,8 @@ class DateTest < Minitest::Test
     parses = DateGrammar.parse '10/31/2021'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'one root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'one root node'
+    root = parse.roots.first
     assert_equal :american, root.name, 'got an American date'
   end
 
@@ -93,8 +93,8 @@ class DateTest < Minitest::Test
     parses = DateGrammar.parse '31/10/2021'
     assert_equal 1, parses.length, 'one parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'one root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'one root node'
+    root = parse.roots.first
     assert_equal :euro, root.name, 'got a euro date'
   end
 
@@ -103,8 +103,8 @@ class DateTest < Minitest::Test
     assert_equal 2, parses.length, 'two parses'
     options = %i[euro american]
     parses.each do |p|
-      assert_equal 1, p.nodes.length
-      options -= [p.nodes.first.name]
+      assert_equal 1, p.roots.length
+      options -= [p.roots.first.name]
     end
     assert_equal [], options, 'one is american and one euro'
   end

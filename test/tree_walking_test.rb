@@ -21,8 +21,8 @@ class TreeWalkingTest < Minitest::Test
     parses = Binary.parse '1 2 3 4  5 6 7 8  9 10 11 12  13 14 15 16'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
-    assert_equal 1, parse.nodes.length, 'parse has a root node'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.length, 'parse has a root node'
+    root = parse.roots.first
     nine = root.leaves.find { |l| l.text == '9' }
     assert !nine.nil?, 'found node number 9'
     assert_equal root, nine.root

@@ -92,18 +92,18 @@ module Gullah
     end
 
     def vet(parse, i, offset, rule, do_unary_branch_check)
-      candidate = "#{rule.name}[#{parse.nodes[i...offset].map(&:summary).join(',')}]"
+      candidate = "#{rule.name}[#{parse.roots[i...offset].map(&:summary).join(',')}]"
       unvetted_summary = [
-        parse.nodes[0...i].map(&:summary) +
+        parse.roots[0...i].map(&:summary) +
         [candidate] +
-        parse.nodes[offset..].map(&:summary)
+        parse.roots[offset..].map(&:summary)
       ].join(';')
       unless @seen.include? unvetted_summary
         @seen << unvetted_summary
         parse.add(i, offset, rule, do_unary_branch_check).tap do |new_parse|
           if new_parse
             new_parse._summary= unvetted_summary
-            new_parse.nodes[i]._summary= candidate
+            new_parse.roots[i]._summary= candidate
           end
         end
       end

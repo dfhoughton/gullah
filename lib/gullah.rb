@@ -52,6 +52,7 @@ module Gullah
     end
   end
 
+  ##
   # Don't make whitespace automatically ignorable.
   #
   #   class Foo
@@ -71,15 +72,33 @@ module Gullah
     @keep_whitespace = true
   end
 
-  # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
+  ##
+  # A tokenization rule to divide the raw text into tokens to by matched by rules.
+  #
+  # The required arguments are a name and a regular expression. The name is what other
+  # rules will refer to. The regular expression of course defines the character sequence
+  # the rule matches. The more precise the regular expression the fewer false possibilities
+  # Gullah will have to sort through to find the best parse(s). Boundary markers in
+  # particular, +\b+ or lookarounds such as +(?<!\d)+, are helpful in this regard.
+  #
+  # The optional arguments are +tests+ and +process+. See +rule+ for more regarding these.
+  #
+  #   leaf :word, /\b\w+\b/
+  #   leaf :integer, /(?<!\d)[1-9]\d*(?!=\d)/, process: ->(n) { n.atts[:val] = n.text.to_i }
+  #   leaf :name, /Bob/, tests: [:not_bobbing]
+  #
+  #   def not_bobbing(n)
+  #     /bing/.match(n.full_text, n.end) ? :fail : :pass
+  #   end
   def leaf(name, rx, tests: [], process: nil)
     _leaf name, rx, ignorable: false, tests: tests, process: process
   end
 
-  # A tokenization rule like `leaf`, but whose tokens are invisible to other rules.
-  # The `ignore` method is otherwise identical to `leaf`.
+  ##
+  # A tokenization rule like +leaf+, but whose tokens are invisible to other rules.
+  # The +ignore+ method is otherwise identical to +leaf+.
   #
-  # Unless `keep_whitespace` is called, an `ignore` rule covering whitespace will be
+  # Unless +keep_whitespace+ is called, an +ignore+ rule covering whitespace will be
   # generated automatically. It's name will be "_ws", or, if that is taken, "_wsN", where
   # N is an integer sufficient to make this name unique among the rules of the grammar.
   def ignore(name, rx, tests: [], process: nil)
@@ -262,7 +281,7 @@ module Gullah
   # it would be conceptually simpler to lazily initialize summaries, but this
   # gives us a speed boost
   def initialize_summaries(parse)
-    summary = parse.nodes.each { |n| n._summary = n.name }.map(&:summary).join(';')
+    summary = parse.roots.each { |n| n._summary = n.name }.map(&:summary).join(';')
     parse._summary = summary
     parse
   end

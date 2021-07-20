@@ -3,10 +3,27 @@
 module Gullah
   # a node in an AST
   class Node
-    # TODO: fix this documentation
-    attr_reader :parent, :rule, :attributes, :children, :summary
+    ##
+    # The parent node of this node, if any.
+    attr_reader :parent
 
-    # an alternative method for when a more telegraphic coding style is useful
+    attr_reader :rule # :nodoc:
+
+    ##
+    # A hash of attributes, including indicators of tests that passed or failed.
+    # The atts alias of attributes exists for when a more telegraphic coding style is useful.
+    attr_reader :attributes
+
+    ##
+    # The children of this node, if any, as an array.
+    attr_reader :children
+
+    ##
+    # A concise stringification of the structure of this node's subtree.
+    attr_reader :summary
+
+    ##
+    # An alternative method for when a more telegraphic coding style is useful.
     alias_method :atts, :attributes
 
     def initialize(parse, s, e, rule) # :nodoc:
@@ -18,7 +35,7 @@ module Gullah
         @start = s
         @end = e
       else
-        @children = parse.nodes[s...e]
+        @children = parse.roots[s...e]
         @children.each { |n| adopt n }
       end
       unless trash?
@@ -51,78 +68,108 @@ module Gullah
       end
     end
 
+    ##
+    # The name of the rule that created this node.
     def name
       rule.name
     end
 
-    # does this node represent a character sequence no leaf rule matched?
+    ##
+    # Does this node represent a character sequence no leaf rule matched?
     def trash?
       false
     end
 
+    ##
+    # Is this a leaf node?
     def leaf?
       @leaf
     end
 
+    ##
+    # Does this node have some failed test or does it represent characters no leaf rule mached?
     def failed?
       trash? || error?
     end
 
+    ##
+    # Does this node have some failed test?
     def error?
       @failed_test
     end
 
-    # does this node's subtree contain unsatisfied syntactic requirements?
+    ##
+    # Does this node's subtree contain unsatisfied syntactic requirements?
+    # These are tests that depend on nodes not in the node's own subtree.
     def pending_tests?
       !!attributes[:pending]
     end
 
-    # whitespace, punctuation, or comments, for example
+    ##
+    # Was this node created by an ignore rule?
     def ignorable?
       @leaf && rule.ignorable
     end
 
-    # not ignorable
+    ##
+    # Was this node created something other than an ignore rule?
     def significant?
       !ignorable?
     end
 
-    # not a leaf?
+    ##
+    # Is this a node that has other nodes as children?
     def nonterminal?
       !@leaf
     end
 
-    # the portion of the original text dominated by this node
+    ##
+    # The portion of the original text covered by this node. This is in effect
+    # the text of the leaves of its subtree.
     def text
       @text[start...self.end]
     end
 
-    # the entire text parsed
+    ##
+    # A reference to the full text the node's text is embedded in.
     def full_text
       @text
     end
 
-    # the node's start text offset
+    ##
+    # The node's start text offset. For a non-terminal node, this will be
+    # the same as the start of the first leaf node of its subtree.
     def start
       @start ||= @children[0].start
     end
 
-    # the node's end text offset
+    ##
+    # The node's end text offset. For a non-terminal node, this will be the
+    # same as the end of the last leaf node of its subtree.
     def end
       @end ||= @children[-1].end
     end
 
-    # depth -- distance from root -- is only useful when the parse is complete
+    ##
+    # Distance of the node from the root node of the parse tree.
+    # During parsing, while nodes are being added, this distance may change, unlike
+    # the height.
+    #
+    # The root node has a depth of 0. It's children have a depth of 1. Their
+    # children have a depth of 2. And so forth.
     def depth
       parent ? 1 + parent.depth : 0
     end
 
-    # distance from first leaf
+    # The distance of a node from the first leaf node in its subtree. If the node
+    # is the immediate parent of this leaf, its distance will be one. Leaves have
+    # a height of zero.
     def height
       @height ||= @leaf ? 0 : 1 + children[0].height
     end
 
-    # unique identifier of a node in a particular parse
+    # A pair consisting of the nodes start and height. This will be a unique
+    # identifier for the node in its parse and is constant at all stages of parsing.
     def position
       @position ||= [start, height]
     end
