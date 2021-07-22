@@ -105,6 +105,33 @@ module Gullah
     _leaf name, rx, ignorable: true, tests: tests, process: process
   end
 
+  ##
+  # Obtain the set of optimal parses of the given text. Optimality is determined
+  # by four criteria. In every case the smaller the number the better.
+  #
+  # correctness:: The count of node or structure tests that have failed.
+  # completion:: The count of root nodes.
+  # pending:: The count of structure tests that were not applied.
+  # size:: The total number of nodes.
+  #
+  # You can adjust the optimality conditions only by removing them via the optional
+  # +filters+ argument. If you supply this argument, only the optimality criteria you
+  # specify will be applied. The order of application is fixed: if parse A is more
+  # correct than parse B, it will be kept and B discarded even if B is more complete,
+  # has fewer pending tests, and fewer nodes.
+  #
+  # The optional +n+ parameter can be used to specify the desired number of parses.
+  # This is useful if your parse rules are ambiguous. For example, consider the grammar
+  #
+  #   class Binary
+  #     extend Gullah
+  #     rule :a, 'a{2}'
+  #     leaf :a, /\S+/
+  #   end
+  #
+  # If you ask this to parse the string "a b c d e f g h i j k l" it will produce
+  # 58,786 equally good parses. These will consume a lot of memory and producing them
+  # will consume a lot of time. The +n+ parameter will let you get on with things faster.
   def parse(text, filters: %i[correctness completion pending size], n: nil)
     commit
     hopper = Hopper.new(filters, n)
@@ -129,6 +156,17 @@ module Gullah
       end
     end
     hopper.dump
+  end
+
+  ##
+  # The first parse found. This takes the same arguments as +parse+ minus +n+.
+  # If there are no parses without errors or unsatisfied pending tree structure
+  # tests, it will be the first erroneous or incomplete parse.
+  #
+  # If you expect the parse to succeed and be unambiguous, this is the method you
+  # want.
+  def first(text, filters: %i[correctness completion pending size])
+    parse(text, filters: filters, n: 1).first
   end
 
   # :stopdoc:

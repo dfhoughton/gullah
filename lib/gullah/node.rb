@@ -249,7 +249,7 @@ module Gullah
       end
     end
 
-    # the immediately following sibling to this node
+    # The immediately following sibling to this node.
     def later_sibling
       parent && parent.children[sibling_index+1]
     end
@@ -258,15 +258,21 @@ module Gullah
       @leaf ? [self] : descendants.select(&:leaf?)
     end
 
+    ##
+    # The collection of nodes in the subtree containing this node that do not +contain+
+    # the node and start offset precedes its start offset.
     def prior
       root.descendants.reject { |n| n.contains? start }.select { |n| n.start < start }
     end
 
+    ##
+    # The collection of nodes in the subtree containing this node that do not +contain+
+    # the node and whose start offset is at or after its end offset.
     def later
       root.descendants.select { |n| n.start >= self.end }
     end
 
-    def clone
+    def clone # :nodoc:
       super.tap do |c|
         c._attributes = deep_clone(attributes)
         unless c.leaf?
@@ -278,9 +284,49 @@ module Gullah
       end
     end
 
-    # a simplified representation of the node
-    # written to facilitate debugging
-    # "so" = "significant only"
+    # Produces a simplified representation of the node to facilitate debugging. The +so+
+    # named parameter, if true, will cause the representation to drop ignored nodes.
+    # The name "so" stands for "significant only".
+    #
+    #   > pp root.dbg
+    #
+    #   {:name=>:S,
+    #    :pos=>{:start=>0, :end=>11, :depth=>0},
+    #    :children=>
+    #     [{:name=>:NP,
+    #       :pos=>{:start=>0, :end=>7, :depth=>1},
+    #       :children=>
+    #        [{:name=>:D, :pos=>{:start=>0, :end=>3, :depth=>2}, :text=>"the"},
+    #         {:name=>:_ws,
+    #          :pos=>{:start=>3, :end=>4, :depth=>2},
+    #          :ignorable=>true,
+    #          :text=>" "},
+    #         {:name=>:N, :pos=>{:start=>4, :end=>7, :depth=>2}, :text=>"cat"}]},
+    #      {:name=>:_ws,
+    #       :pos=>{:start=>7, :end=>8, :depth=>1},
+    #       :ignorable=>true,
+    #       :text=>" "},
+    #      {:name=>:VP,
+    #       :pos=>{:start=>8, :end=>11, :depth=>1},
+    #       :children=>
+    #        [{:name=>:V, :pos=>{:start=>8, :end=>11, :depth=>2}, :text=>"sat"}]}]}
+    #
+    #   > pp root.dbg so: true
+    #
+    #   {:name=>:S,
+    #    :pos=>{:start=>0, :end=>11, :depth=>0},
+    #    :children=>
+    #     [{:name=>:NP,
+    #       :pos=>{:start=>0, :end=>7, :depth=>1},
+    #       :children=>
+    #        [{:name=>:D, :pos=>{:start=>0, :end=>3, :depth=>2}, :text=>"the"},
+    #         {:name=>:_ws, :pos=>{:start=>3, :end=>4, :depth=>2}, :text=>" "},
+    #         {:name=>:N, :pos=>{:start=>4, :end=>7, :depth=>2}, :text=>"cat"}]},
+    #      {:name=>:_ws, :pos=>{:start=>7, :end=>8, :depth=>1}, :text=>" "},
+    #      {:name=>:VP,
+    #       :pos=>{:start=>8, :end=>11, :depth=>1},
+    #       :children=>
+    #        [{:name=>:V, :pos=>{:start=>8, :end=>11, :depth=>2}, :text=>"sat"}]}]}
     def dbg(so: false)
       {
         name: name,
@@ -374,9 +420,9 @@ module Gullah
         @skip = skip
       end
 
-      def each(&block)
+      def each
         yield @n unless @n == @skip
-        @n.parent&._ancestors(@skip)&.each(&block)
+        @n.parent&._ancestors(@skip)&.each { |o| yield o }
       end
 
       def last
@@ -391,11 +437,11 @@ module Gullah
         @skip = skip
       end
 
-      def each(&block)
+      def each
         yield @n unless @n == @skip
         unless @n.leaf?
           @n.children.each do |c|
-            c._descendants(@skip).each(&block)
+            c._descendants(@skip).each { |o| yield o }
           end
         end
       end

@@ -20,6 +20,7 @@ class BasicTest < Minitest::Test
     parses = Simple.parse 'foo bar baz'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
+    assert_equal parse.size, parse.nodes.count, "nodes iterator works"
     assert_equal 1, parse.roots.length, 'parse has a root node'
     root = parse.roots.first
     assert_equal :a, root.name, 'root node has the right label'

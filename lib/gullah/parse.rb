@@ -2,7 +2,28 @@
 
 module Gullah
   ##
-  # A parse is
+  # A parse is the collection of root nodes produced by parsing a text.
+  #
+  #   class Example
+  #     extend Gullah
+  #
+  #     rule :S, 'NP VP'
+  #     rule :NP, 'D N'
+  #     rule :VP, 'V'
+  #
+  #     leaf :D, /the/
+  #     leaf :N, /cat/
+  #     leaf :V, /sat/
+  #   end
+  #
+  #   parses = Example.parse 'the cat sat', n: 1
+  #
+  #   # this is a Parse
+  #   parse = parses.first
+  #   puts parse.length  # => 1
+  #   puts parse.size    # => 8
+  #   puts parse.summary # => S[NP[D,_ws,N],_ws,VP[V]]
+  #
   class Parse
     ##
     # The root nodes of all subtrees found in this parse in sequence. This is an array.
@@ -74,6 +95,16 @@ module Gullah
       roots.map { |n| n.dbg so: so }
     end
 
+    ##
+    # return an enumeration of all the nodes in the parse.
+    #
+    #   parses = Grammar.parse "this grammar uses the usual whitespace rule"
+    #
+    #   parses.first.nodes.select { |n| n.name == :_ws }.count  # => 6
+    def nodes
+      return NodeIterator.new self
+    end
+
     def clone # :nodoc:
       super.tap do |c|
         %i[@summary @size @correctness_count @pending_count].each do |v|
@@ -99,22 +130,11 @@ module Gullah
 
       def initialize(parse)
         @parse = parse
-        @root_index = 0
-        @sub_iterator = parse.roots[0].subtree
-        @done = false
       end
 
-      def next
-        return nil if @done
-
-        @sub_iterator.next || begin
-          if @root_index == parse.roots.length
-            @done = true
-            return nil
-          end
-          @root_index += 1
-          @sub_iterator = parse.roots[@root_index].subtree
-          @sub_iterator.next
+      def each
+        @parse.roots.each do |root|
+          root.subtree.each { |n| yield n }
         end
       end
 
