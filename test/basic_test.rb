@@ -438,7 +438,7 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.length
     root = parse.roots.first
     assert_equal 8, root.size
-    assert_equal 3, root.descendants.count { |n| n.name == :"name?" }
+    assert_equal 3, (root.descendants.count { |n| n.name == :"name?" })
     assert_equal :'literal"', root.leaves.last.name
   end
 

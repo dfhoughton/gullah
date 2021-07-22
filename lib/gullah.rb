@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-%w[version atom error hopper leaf node trash parse rule iterator dotifier].each do |s|
+%w[version atom error hopper leaf node trash boundary parse rule iterator dotifier].each do |s|
   require "gullah/#{s}"
 end
 
@@ -125,6 +125,21 @@ module Gullah
   # N is an integer sufficient to make this name unique among the rules of the grammar.
   def ignore(name, rx, tests: [], process: nil)
     _leaf name, rx, ignorable: true, tests: tests, process: process
+  end
+
+  ##
+  # A tokenization rule like +leaf+, but whose tokens cannot be the children of other nodes.
+  # The +ignore+ method is otherwise identical to +leaf+.
+  #
+  # Boundaries are extremely valuable for reducing the complexity of parsing, because Gullah
+  # knows no parse can span a boundary. Trash nodes -- nodes that correspond to character
+  # sequences unmatched by any leaf rule -- are also boundaries, though most likely erroneous
+  # boundaries.
+  #
+  #   # clause boundary pattern
+  #   boundary :terminal, /[.!?](?=\s*\z|\s+"?\p{Lu})|[:;]/
+  def boundary(name, rx, tests: [], process: nil)
+    _leaf name, rx, boundary: true, tests: tests, process: process
   end
 
   ##
@@ -289,14 +304,14 @@ module Gullah
   end
 
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
-  def _leaf(name, rx, ignorable: false, tests: [], process: nil)
+  def _leaf(name, rx, ignorable: false, boundary: false, tests: [], process: nil)
     init
     init_check(name)
     name = name.to_sym
     return if dup_check(:leaf, name, rx, tests)
 
     tests << [process] if process
-    @leaves << Leaf.new(name, rx, ignorable: ignorable, tests: tests)
+    @leaves << Leaf.new(name, rx, ignorable: ignorable, boundary: boundary, tests: tests)
   end
 
   # convert raw text into one or more strings of leaf nodes
@@ -312,7 +327,7 @@ module Gullah
 
         added_any = true
         e = md.end(0)
-        new_parse = parse.add(offset, e, leaf, @do_unary_branch_check)
+        new_parse = parse.add(offset, e, leaf, @do_unary_branch_check, false, leaf.boundary)
         if e == text.length
           done << initialize_summaries(new_parse)
         else

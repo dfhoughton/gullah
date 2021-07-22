@@ -74,7 +74,7 @@ module Gullah
 
         return returnable(nodes, i + offset + 1) if count == max_repeats
 
-        if !n.failed? && n.name == seeking
+        if n.traversible? && n.name == seeking
           count += 1
           return returnable(nodes, i + offset + 1) if count == max_repeats
 

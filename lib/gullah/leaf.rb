@@ -3,12 +3,13 @@
 module Gullah
   # a rule used in string tokenization
   class Leaf # :nodoc:
-    attr_reader :rx, :name, :ignorable, :tests, :ancestor_tests
+    attr_reader :rx, :name, :ignorable, :boundary, :tests, :ancestor_tests
 
-    def initialize(name, rx, ignorable: false, tests: [])
+    def initialize(name, rx, ignorable: false, boundary: false, tests: [])
       @name = name
       @rx = rx
       @ignorable = ignorable
+      @boundary = boundary
       @tests = tests
     end
 

@@ -7,5 +7,9 @@ module Gullah
     def trash?
       true
     end
+
+    def boundary?
+      true
+    end
   end
 end

@@ -89,6 +89,9 @@ module Gullah
       if node.trash?
         atts << 'color=red'
         atts << 'shape=box'
+      elsif node.boundary?
+        atts << 'color=blue'
+        atts << 'shape=box'
       elsif node.error?
         atts << 'color=red'
         atts << 'shape=oval'

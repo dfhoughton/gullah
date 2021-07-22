@@ -81,6 +81,12 @@ module Gullah
     end
 
     ##
+    # Is this node one that cannot be the child of another node?
+    def boundary?
+      false
+    end
+
+    ##
     # Is this a leaf node?
     def leaf?
       @leaf
@@ -90,6 +96,11 @@ module Gullah
     # Does this node have some failed test or does it represent characters no leaf rule mached?
     def failed?
       trash? || error?
+    end
+
+    # is this node some sort of boundary to further matching
+    def traversible? # :nodoc:
+      !(boundary? || trash? || error?)
     end
 
     ##

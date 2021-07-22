@@ -43,10 +43,16 @@ module Gullah
     end
 
     # produce a clone of this parse with a new node with the given offsets and rule
-    def add(s, e, rule, loop_check, trash = false) # :nodoc:
+    def add(s, e, rule, loop_check, trash = false, boundary = false) # :nodoc:
       clone.tap do |b|
         b._roots = roots.map(&:clone)
-        cz = trash ? Trash : Node
+        cz = if trash
+          Trash
+        elsif boundary
+          Boundary
+        else
+          Node
+        end
         n = cz.new(b, s, e, rule)
         return nil if loop_check && n._loop_check?
 
