@@ -47,12 +47,12 @@ module Gullah
       clone.tap do |b|
         b._roots = roots.map(&:clone)
         cz = if trash
-          Trash
-        elsif boundary
-          Boundary
-        else
-          Node
-        end
+               Trash
+             elsif boundary
+               Boundary
+             else
+               Node
+             end
         n = cz.new(b, s, e, rule)
         return nil if loop_check && n._loop_check?
 
