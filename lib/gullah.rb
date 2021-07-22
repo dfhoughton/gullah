@@ -26,11 +26,33 @@ end
 # Gullah can produce parse trees from incomplete or ambiguous grammars. It can handle
 # noisy data. One can apply arbitrary tests to parse nodes, including tests that
 # depend on other nodes in the parse tree. In the case of test failure the nature
-# of the failure is marked on the corresponding nodes in the parse tree. 
+# of the failure is marked on the corresponding nodes in the parse tree.
 module Gullah
-  # create a rule in an extending class
+  ##
+  # Define a tree structure rule. This specifies how tree nodes may be grouped under
+  # another node. The required arguments are +name+ and +body+. The former is a label
+  # for the node under which the others are grouped. The latter is a string defining
+  # the rule.
   #
-  # rule :noun, "det n_bar"
+  #   rule :sequence, 'this then this'
+  #
+  #   rule :quantifiers, 'foo bar? baz* plugh+ qux{2} quux{3,} corge{4,5}'
+  #
+  #   rule :alternates, 'this | or | that'
+  #   # you may also add alternates like so
+  #   rule :alternates, 'also | these | and | those'
+  #   rule :alternates, 'etc'
+  #
+  #   rule :literals, %['this' "that"]
+  #
+  #   rule :escapes, 'foo\\? "bar\\""'
+  #
+  #   # the optional named arguments:
+  #
+  #   rule :process, 'aha', process: ->(n) { log "Aha! we just matched #{n.text}!" }
+  #   rule :or_maybe, 'oho', process: :some_arity_one_method_in_class_extending_gullah
+  #
+  #   rule :tests, 'test me', tests: %i[node structure]
   def rule(name, body, tests: [], process: nil)
     init
     init_check(name)

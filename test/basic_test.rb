@@ -426,6 +426,20 @@ class BasicTest < Minitest::Test
     assert_equal root.leaves.first, verb, 'the verb is the first leaf'
   end
 
+  class Escapes
+    extend Gullah
+
+    rule :stuff, %[name\\?+ "literal\\""]
+    leaf :"name?", /\w+/
+  end
+
+  def test_escapes
+    parse = Escapes.first 'some words then literal"'
+    assert 1, parse.length
+    root = parse.roots.first
+    assert 8, root.size
+  end
+
   private
 
   def good(parses)
