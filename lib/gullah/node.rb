@@ -11,7 +11,7 @@ module Gullah
 
     ##
     # A hash of attributes, including indicators of tests that passed or failed.
-    # The atts alias of attributes exists for when a more telegraphic coding style is useful.
+    # The +atts+ alias of +attributes+ exists for when a more telegraphic coding style is useful.
     attr_reader :attributes
 
     ##
@@ -172,6 +172,7 @@ module Gullah
       parent ? 1 + parent.depth : 0
     end
 
+    ##
     # The distance of a node from the first leaf node in its subtree. If the node
     # is the immediate parent of this leaf, its distance will be one. Leaves have
     # a height of zero.
@@ -179,18 +180,21 @@ module Gullah
       @height ||= @leaf ? 0 : 1 + children[0].height
     end
 
+    ##
     # A pair consisting of the nodes start and height. This will be a unique
     # identifier for the node in its parse and is constant at all stages of parsing.
     def position
       @position ||= [start, height]
     end
 
-    # does this node contain the given text offset?
+    ##
+    # Does this node contain the given text offset?
     def contains?(offset)
       start <= offset && offset < self.end
     end
 
-    # find the node at the given position within this node's subtree
+    ##
+    # Finds the node at the given position within this node's subtree.
     def find(pos)
       offset = pos.first
       return nil unless contains?(offset)
@@ -202,69 +206,108 @@ module Gullah
       end
     end
 
+    ##
+    # The number of nodes in this node's subtree. Leaves always have a size of 1.
     def size
       @size ||= @leaf ? 1 : @children.map(&:size).sum + 1
     end
 
-    # the root of this node's current parse tree
+    ##
+    # The root of this node's current parse tree.
+    #
+    # Note, if you use this in a node test
+    # the root will always be the same as the node itself because these tests are run
+    # when the node is being added to the tree. If you use it in structure tests, it
+    # will be some ancestor of the node but not necessarily the final root. The current
+    # root is always the first argument to structure tests. Using this argument is more
+    # efficient than using the root method. Really, the root method is only useful in
+    # completed parses.
     def root
       parent ? parent.root : self
     end
 
+    ##
+    # Does this node have any parent? If not, it is a root.
     def root?
       parent.nil?
     end
 
+    ##
+    # Returns an Enumerable enumerating the nodes immediately above this node in the
+    # tree: its parent, its parent's parent, etc.
     def ancestors
       _ancestors self
     end
 
+    ##
+    # Returns an Enumerable over the descendants of this node: its children, its children's
+    # children, etc. This enumeration is depth-first.
     def descendants
       _descendants self
     end
 
+    ##
+    # Returns an Enumerable over this node and its descendants. The node itself is the first
+    # node returned.
     def subtree
       _descendants nil
     end
 
+    ##
+    # Returns the children of this node's parent's children minus this node itself.
     def siblings
       parent.children.reject { |n| n == self } if parent
     end
 
+    ##
+    # The index of this node among its parent's children.
     def sibling_index
       if parent
         @sibling_index ||= parent.children.index self
       end
     end
 
+    ##
+    # Returns the children of this node's parent that precede it.
     def prior_siblings
       parent && siblings[0...sibling_index]
     end
 
+    ##
+    # Returns the children of this node's parent that follow it.
     def later_siblings
       parent && siblings[(sibling_index+1)..]
     end
 
+    ##
+    # Is this node the last of its parent's children?
     def last_child?
       parent && sibling_index == parent.children.length - 1
     end
 
+    ##
+    # Is this node the first of its parent's children?
     def first_child?
       sibling_index == 0
     end
 
-    # the immediately prior sibling to this node
+    ##
+    # The immediately prior sibling to this node.
     def prior_sibling
       if parent
         first_child? ? nil : parent.children[sibling_index-1]
       end
     end
 
+    ##
     # The immediately following sibling to this node.
     def later_sibling
       parent && parent.children[sibling_index+1]
     end
 
+    ##
+    # The leaves of this node's subtree. If the node is a leaf, the returns a
+    # single-member array containing the node itself.
     def leaves
       @leaf ? [self] : descendants.select(&:leaf?)
     end

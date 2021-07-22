@@ -173,7 +173,7 @@ module Gullah
     raise Error, 'n must be positive' if n&.zero?
 
     commit
-    segments = segment(text, filters, n)
+    segments = segment(text.to_s, filters, n)
     initial_segments = segments.select { |s| s.start.zero? }
     if n
       # iterate till all segments done or we get >= n parses

@@ -64,33 +64,48 @@ module Gullah
       end
     end
 
+    ##
     # The number of root nodes in this parse. This is *not* the same as size.
     def length
       roots.length
     end
 
+    ##
     # The total number of nodes in this parse. This is *not* the same as length.
     def size
       @size ||= roots.sum(&:size)
     end
 
+    ##
+    # The count of nodes that failed some test. Structure tests mark both the
+    # child as erroneous and the ancestor node where the test was run.
     def correctness_count
       @correctness_count ||= roots.select(&:failed?).count
     end
 
+    ##
+    # The count of nodes which have some structure test which was never
+    # successfully run.
     def pending_count
       @pending_count ||= roots.select(&:pending_tests?).count
     end
 
+    ##
+    # Are there any nodes in the parse that are erroneous, either because
+    # some test failed or because they correspond to "trash" -- characters
+    # that matched no leaf rule?
     def errors?
       correctness_count.positive?
     end
 
-    # all leaves accounted for without errors; all tests passed
+    ##
+    # Are all leaves accounted for without errors and have all tests passed?
     def success?
       !errors? && roots.all? { |n| n.ignorable? || n.nonterminal? && !n.pending_tests? }
     end
 
+    ##
+    # Not a +success?+
     def failure?
       !success?
     end
@@ -119,10 +134,14 @@ module Gullah
       end
     end
 
+    ##
+    # The start offset of the first leaf in the parse.
     def start
       roots.first.start
     end
 
+    ##
+    # The end offset of the last leaf in the parse.
     def end
       roots.last.end
     end

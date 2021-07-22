@@ -16,6 +16,12 @@ module Gullah
   # I make no guarantees about this utility. You may want to build your own,
   # in which case this may serve as a simple prototype.
   class Dotifier
+    ##
+    # Receives a parse and a file name and generates a graph specification
+    # readable by graphviz. The specification is written to a file with the
+    # specified file name. If +make_it+ is truthy, the +dot+ command will
+    # also be invoked and the graph image generated. By default this will be
+    # a png, though the type is specifiable via the +type+ named argument.
     def self.dot(parse, file, make_it: false, type: 'png')
       new.send :dot, parse, file, make_it, type
     end
