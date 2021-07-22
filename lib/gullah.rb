@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-%w[version atom error hopper leaf node trash boundary parse rule iterator dotifier].each do |s|
+%w[version atom error hopper leaf node trash boundary parse rule iterator dotifier segment].each do |s|
   require "gullah/#{s}"
 end
 
@@ -170,29 +170,25 @@ module Gullah
   # 58,786 equally good parses. These will consume a lot of memory and producing them
   # will consume a lot of time. The +n+ parameter will let you get on with things faster.
   def parse(text, filters: %i[correctness completion pending size], n: nil)
+    raise Error, 'n must be positive' if n&.zero?
+
     commit
-    hopper = Hopper.new(filters, n)
-    bases = lex(text).map do |p|
-      Iterator.new(p, hopper, @starters, @do_unary_branch_check)
-    end
-    while (iterator = bases.pop)
-      unless hopper.continuable?(iterator.parse)
-        hopper << iterator.parse
-        return hopper.dump if hopper.satisfied?
-
-        next
+    segments = segment(text, filters, n)
+    initial_segments = segments.select { |s| s.start.zero? }
+    if n
+      # iterate till all segments done or we get >= n parses
+      # another place to start parallelization
+      while (s = segments.reject(&:done).min_by(&:weight))
+        break if s.next && initial_segments.sum(&:total_parses) >= n
       end
-
-      if (p = iterator.next)
-        bases << iterator
-        bases << Iterator.new(p, hopper, @starters, @do_unary_branch_check)
-      elsif iterator.never_returned_any?
-        # it looks this iterator was based on an unreducible parse
-        hopper << iterator.parse
-        return hopper.dump if hopper.satisfied?
+    else
+      # iterate till all segments done
+      # NOTE: could be parallelized
+      while (s = segments.find { |s| !s.done })
+        s.next
       end
     end
-    hopper.dump
+    initial_segments.flat_map(&:results)
   end
 
   ##
@@ -314,7 +310,7 @@ module Gullah
     @leaves << Leaf.new(name, rx, ignorable: ignorable, boundary: boundary, tests: tests)
   end
 
-  # convert raw text into one or more strings of leaf nodes
+  # convert raw text into one or more arrays of leaf nodes
   def lex(text)
     bases = [[0, Parse.new(text)]]
     done = []
@@ -329,7 +325,7 @@ module Gullah
         e = md.end(0)
         new_parse = parse.add(offset, e, leaf, @do_unary_branch_check, false, leaf.boundary)
         if e == text.length
-          done << initialize_summaries(new_parse)
+          done << new_parse
         else
           bases << [e, new_parse]
         end
@@ -345,7 +341,7 @@ module Gullah
       end
       new_parse = parse.add(offset, trash_offset, trash_rule, false, true)
       if trash_offset == text.length
-        done << initialize_summaries(new_parse)
+        done << new_parse
       else
         bases << [trash_offset, new_parse]
       end
@@ -353,12 +349,17 @@ module Gullah
     done
   end
 
-  # it would be conceptually simpler to lazily initialize summaries, but this
-  # gives us a speed boost
-  def initialize_summaries(parse)
-    summary = parse.roots.each { |n| n._summary = n.name }.map(&:summary).join(';')
-    parse._summary = summary
-    parse
+  # slice text into independent segments
+  def segment(text, filters, n)
+    uncollected_segments = lex(text).flat_map(&:split)
+    segments = uncollected_segments.group_by { |s| [s.start, s.end] }.values.map do |segs|
+      Segment.new segs, filters, @starters, @do_unary_branch_check, n
+    end
+    segments.group_by(&:end).each do |final_offset, segs|
+      continuations = segments.select { |s| s.start == final_offset }
+      segs.each { |s| s.continuations = continuations }
+    end
+    segments
   end
 
   def trash_rule
@@ -438,7 +439,3 @@ module Gullah
     end
   end
 end
-
-# TODOS
-#
-# sausagify the parsing; boundary

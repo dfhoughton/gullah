@@ -119,9 +119,67 @@ module Gullah
       end
     end
 
+    def start
+      roots.first.start
+    end
+
+    def end
+      roots.last.end
+    end
+
     ## ADVISORILY PRIVATE
 
     # :stopdoc:
+
+    # for debugging
+    def own_text
+      text[start...self.end]
+    end
+
+    # make a new parse whose first part is this parse's nodes and whose
+    # second part is the later parse's nodes
+    def merge(later)
+      self.class.new(text).tap do |merged|
+        merged._roots = roots + later.roots
+      end
+    end
+
+    # split the parse into segments and boundaries
+    def split
+      last_index = 0
+      splits = []
+      roots.each_with_index do |n, i|
+        next if n.traversible?
+
+        segment = Parse.new text
+        segment._roots = roots[last_index...i]
+        splits << segment.initialize_summaries
+        # create boundary element
+        segment = Parse.new text
+        segment._roots = [n]
+        splits << segment.initialize_summaries
+        last_index = i + 1
+      end
+      return [initialize_summaries] if last_index.zero?
+
+      if last_index < roots.length
+        segment = Parse.new text
+        segment._roots = roots[last_index...roots.length]
+        splits << segment.initialize_summaries
+      end
+      splits
+    end
+
+    def _roots=(roots)
+      @roots = roots
+    end
+
+    # it would be conceptually simpler to lazily initialize the summary, but this
+    # gives us a speed boost
+    def initialize_summaries
+      @summary = roots.each { |n| n._summary = n.name }.map(&:summary).join(';')
+      self
+    end
 
     def _summary=(str)
       @summary = str
