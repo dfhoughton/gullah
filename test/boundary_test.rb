@@ -23,8 +23,6 @@ class BoundaryTest < Minitest::Test
     parses = Bounded.parse 'One sentence. Another sentence.'
     assert_equal 1, parses.length, 'Got one parse.'
     parse = parses.first
-    puts parse.summary
-    Gullah::Dotifier.dot parse, 'boundaries', make_it: :so
     assert_equal 5, parse.length, 'One node per sentence plus one per boundary plus one space.'
     assert_equal 2, parse.nodes.count(&:boundary?), 'There are two boundary nodes.'
   end
