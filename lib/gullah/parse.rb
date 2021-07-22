@@ -102,7 +102,7 @@ module Gullah
     #
     #   parses.first.nodes.select { |n| n.name == :_ws }.count  # => 6
     def nodes
-      return NodeIterator.new self
+      NodeIterator.new self
     end
 
     def clone # :nodoc:
@@ -132,9 +132,9 @@ module Gullah
         @parse = parse
       end
 
-      def each
+      def each(&block)
         @parse.roots.each do |root|
-          root.subtree.each { |n| yield n }
+          root.subtree.each(&block)
         end
       end
 
