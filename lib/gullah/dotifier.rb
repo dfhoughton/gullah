@@ -14,7 +14,7 @@ module Gullah
   # graphviz some other way.
   #
   # I make no guarantees about this utility. You may want to build your own,
-  # in which case this may serve as a simple prototype.
+  # in which case this can serve as a simple prototype.
   class Dotifier
     ##
     # Receives a parse and a file name and generates a graph specification

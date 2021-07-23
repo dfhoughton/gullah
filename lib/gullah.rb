@@ -27,6 +27,175 @@ end
 # noisy data. One can apply arbitrary tests to parse nodes, including tests that
 # depend on other nodes in the parse tree. In the case of test failure the nature
 # of the failure is marked on the corresponding nodes in the parse tree.
+#
+# = Syntax
+# 
+#
+#
+# = Tests
+#
+#   rule :all, 'baz+',   tests: %i[half_even]
+#   rule :baz, 'foo | bar'
+#
+#   leaf :foo, /\d+/,    tests: %i[xenophilia]
+#   leaf :bar, /[a-z]/i, tests: %i[xenophilia]
+#
+#   # node test!
+#
+#   # half the digit characters under this node must be even, half, odd
+#   def half_even(node)
+#     even, odd = node.text.chars.select { |c| c =~ /\d/ }.partition { |c| c.to_i.even? }
+#     even.length == odd.length ? :pass : :fail
+#   end
+#
+#   # structure test!
+#
+#   # foos need bars and bars need foos
+#   def xenophilia(root, node)
+#     if root.name == :all
+#       sought = node.name == :foo ? :bar : :foo
+#       root.descendants.any? { |n| n.name == sought } ? :pass : :fail
+#     end
+#   end
+# 
+# A special feature of Gullah is that you can add arbitrary tests to its rules. For example
+# you can use a simple regular expression to match a date and then a test to do a sanity
+# check to confirm that the parts of the date, the year, month, and day, combine to produce
+# a real date on the calendar. This is better than simply writing a thorough regular expression
+# because it gives you the opportunity to tell the user *how* a match failed rather than simply
+# that it failed. This feature is Gullah's answer to such things as lookarounds and back
+# references: you've matched a simple pattern; now does this pattern fit sanely with its context?
+#
+# There are two sorts of tests: node tests and structure tests. Node tests are tests that need
+# only the node itself and its subtree as inputs. Structure tests are tests that depend on
+# elements of the parse tree outside of the subtree rooted at the node itself.
+#
+# Tests are implemented as instance methods of the Gullah-fied class. If the method has an arity
+# of one, it is a node test. Its single argument is the node matched. If it has an arity of two,
+# it is a structure test. The first argument is an ancestor node of the node corresponding to the
+# rule. The second argument is the node itself. Because structure tests cannot be run until the
+# node has some ancestor, and then they might not apply to all ancestors, they can be in a "pending"
+# state, where the test is queued to run but has not yet run.
+#
+# Tests must return one of four values: +:pass+, +:fail+, +:ignore+, or +nil+. Only structure
+# tests may return +nil+, which indicates that the preconditions for the test have not yet been
+# met. If a structure test returns +nil+, the test remains in a pending state and it will be run
+# again when the node acquires a new ancestor.
+#
+# If a node test passes, the node is accepted into the parse tree. If it fails, the node is marked
+# as erroneous and the particular cause of its failure is marked in the abstract syntax tree. If
+# this tree is returned to the user, they will see this information. In addition to +:fail+, the rule
+# may return more specific explanatory information:
+#
+#   rule :word, /\w+/, tests: %i[we_want_foo!]
+#
+#   def we_want_foo!(n)
+#     if n.text =~ /foo/
+#       :pass
+#     else
+#       [:fail, %Q[we really wanted to see "foo" but all we got was #{n.text.inspect}]]
+#     end
+#   end
+#
+# The test may simply return +:fail+, or it may return a array beginning with +:fail+ and
+# continuing with whatever else one wishes to stash in the +attribute+ hash of the node in
+# the AST.
+#
+# If a node returns +:pass+, the fact that the node passed the rule in question will be added to
+# its +attributes+ hash in the AST.
+#
+# If a rule returns +:ignore+, this will constitute a pass, but no edits will be made to the AST.
+#
+# Only structure rules may return +nil+. This indicates that the preconditions for the test are not
+# present, in which case the test will be deferred until the node acquires a new ancestor.
+#
+# Tests short-circuit! If a node has many tests, they run until one fails
+#
+# = Processors
+#
+#   rule :word, /[a-z]+/i, process: :abbrv
+#   leaf :integer, /[1-9]\d*/, process: ->(n) { n.atts[:val] = n.text.to_i }
+#
+#   def abbrv(node)
+#     node.attributes[:abbreviation] = node.text.gsub(/(?<!^)[aeiou]/, '')[0...5]
+#   end
+#
+# Any rule may have a +process+ named argument whose value is either a proc or a symbol.
+# If it is a symbol, it must be the name of an instance method of the Gullah-fied class.
+# In either case, the arity of the code in question must be one: its single argument will
+# be the node created by the rule.
+#
+# The processing code may do anything -- log the event, provide a breakpoint -- but its
+# expected use is to calculate and store some attribute of the node or its subtree in the
+# node's attribute hash, most likely to accelerate other tests that will depend on this
+# value. You may use this mechanism for other purposes, of course, to compile the text
+# parsed into a more useful object, say, but because processing may occur on nodes which
+# are later discarded in failed parses, it may be more efficient to defer such handling
+# of the AST until the parse completes.
+#
+# Processors run after any tests have completed and only if they all pass.
+#
+# = Motivation
+# 
+# Why does Gullah exist? Well, mostly because it seemed like fun to make it. I have made
+# other grammar-adjacent things -- a recursive descent parser in Java inspired by the grammars
+# of Raku, various regular expression optimization libraries in various languages, a simple
+# grammar-esque regular expression enhancer for Rust that produces abstract syntax trees but
+# can't handle recursion -- so I was thinking about the topic. A problem I faced with the recursive
+# descent parser, which I later learned was a well-known problem, is that of infinite left-recursion.
+# If you have a rule such as <tt>X -> X Y | Z</tt>, where an +X+ can be made of other +X+ es, your recursive
+# descent parser constructs an infinitely long plan that never touches the data -- "I'll try an X, which
+# means I'll first try an X, which means I'll first try an X..." The solution to this is to create an
+# arbitrary, perhaps adjustable, recursion limit, recognize this pattern of recursion, and bail out
+# when you find you've planned too long without executing anything. This is how I solved the problem in
+# the library I wrote, but I found this unsatisfactory.
+#
+# An alternative solution, it occurred to me, was to start with the data rather than the plan. "I have
+# an +X+. What can I make with this?" This instantly solves the left recursion problem, because the application
+# of a rule must consume nodes, and it seems like a more
+# reasonable way to parse things generally. As a latent linguist, this appealed to me as more psychologically
+# realistic. Certainly people understand words in part by approaching language with expectations -- the top-down
+# pattern you see in recursive descent -- but people are constantly confronted with text begun in the middle or
+# interrupted or repaired mid-sentence, so they must be able as well to take the words they hear and try to
+# make something from them. So I wanted to make a data-driven, bottom-up parser.
+#
+# (One thing I should say up front is that the design of Gullah is based entirely on my own pondering. I am not
+# a very enthusiastic reader of other people's research. I am aware that a lot of work has been done on
+# parsing and parser design, but the fun for me is in coming up with the ideas more than doing the background
+# reading, so I have just dived in. I am sure I have reinvented some wheels in this, mostly likely badly.)
+#
+# (Another aside: The left-recursion problem disappears with a bottom-up parser, which must consume data to proceed, but it
+# is replaced with a unary-branching problem. If you have a rule that says an +A+ can be relabeled +B+ -- that
+# is, you can add a node with a single child -- you risk an infinite loop. You may define rules such that +A+ becomes
+# +B+, and another rule, or series of rules, which turns this +B+ back into an +A+. So this bottom-up parser has
+# a somewhat unsatisfactory loop check as well, but only when it determines that some set of rules allow this pattern.)
+#
+# A side benefit of bottom-up parsing is that it is robust against ill-formed data. If you can't make what you
+# set out to make at least you can make something. And the structure you build out of the data can show very
+# clearly where it has gone wrong. As a linguist, this appealed to my desire to model natural languages with
+# all their noise and redundancy. As a programmer, this appealed to me as a way to make data problems
+# transparent and solvable.
+#
+# = Efficiency
+#
+# I have taken care to make rules fail fast and have followed a dynamic programming model in which I cache
+# information which would otherwise be recalculated in many recursions, but Gullah is certainly not as
+# efficient as a parser custom designed for a particular language. A SAX parser of XML, for example, can
+# process its input in linear time by pushing half-processed constructs onto a stack. The general mechanism
+# underlying Gullah is worst-case quadratic, because events already seen may have to be scanned again to
+# see whether recent decisions have changed whether they can be handled. If every node added to a
+# provisional parse tree reduces the unprocessed node count by one and every scan on average finishes
+# halfway through the unhandled nodes, this would mean n(n - 1)/2 comparisons to complete the tree. I doubt,
+# though I cannot prove, that one could improve on this while maintaining one's parser's ability to handle
+# broken data or ambiguous grammars. Ranking rules to try next based on past experience in the tree
+# might improve the speed of parse discovery, but at the cost of greater complexity in the handling of any
+# single scan.
+#
+# So if you have a particular data format or language you want to handle efficiently and you expect in most
+# cases you will succeed without ambiguity on a single pass, Gullah may not be the tool you want. But if you
+# want to recover gracefully, it may be that a second pass with Gullah to produce the least bad parse and
+# some information about how things went wrong is useful.
+
 module Gullah
   ##
   # Define a tree structure rule. This specifies how tree nodes may be grouped under
@@ -169,6 +338,20 @@ module Gullah
   # If you ask this to parse the string "a b c d e f g h i j k l" it will produce
   # 58,786 equally good parses. These will consume a lot of memory and producing them
   # will consume a lot of time. The +n+ parameter will let you get on with things faster.
+  #
+  # A caveat: Because of the way Gullah works you may not get exactly +n+ parses
+  # back when you ask for +n+. There may not be sufficiently many parses, of course, but
+  # you may also get back more than +n+ parses if the text you are parsing contains
+  # parsing boundaries. Gullah parses the portions of text inside the boundaries separately,
+  # so the number of possible parses will be the product of the number of parses of
+  # each bounded segment. If you have a sentence boundary in the middle of your text,
+  # and thus two segments, the number of parses of the entire text will be the number
+  # of parses of the first segment times the number of parses of the second. If the first
+  # has two parses and the second also has two but you ask for 3, the number of parses
+  # Gullah will find as it goes will be 1, then 2, then 4. There is no iteration of the
+  # process in which Gullah has found exactly 3 parses. The 4 it has found are necessarily
+  # all equally good, so rather than arbitrarily choosing 3 and discarding one, Gullah
+  # will return all 4.
   def parse(text, filters: %i[correctness completion pending size], n: nil)
     raise Error, 'n must be positive' if n&.zero?
 
