@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'byebug', '~> 9.1.0'
+  s.add_development_dependency 'json', '~> 2'
   s.add_development_dependency 'minitest', '~> 5'
   s.add_development_dependency 'rake', '~> 10.0'
 end

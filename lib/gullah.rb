@@ -29,7 +29,7 @@ end
 # of the failure is marked on the corresponding nodes in the parse tree.
 #
 # = Syntax
-# 
+#
 #
 #
 # = Tests
@@ -57,7 +57,7 @@ end
 #       root.descendants.any? { |n| n.name == sought } ? :pass : :fail
 #     end
 #   end
-# 
+#
 # A special feature of Gullah is that you can add arbitrary tests to its rules. For example
 # you can use a simple regular expression to match a date and then a test to do a sanity
 # check to confirm that the parts of the date, the year, month, and day, combine to produce
@@ -136,7 +136,7 @@ end
 # Processors run after any tests have completed and only if they all pass.
 #
 # = Motivation
-# 
+#
 # Why does Gullah exist? Well, mostly because it seemed like fun to make it. I have made
 # other grammar-adjacent things -- a recursive descent parser in Java inspired by the grammars
 # of Raku, various regular expression optimization libraries in various languages, a simple
@@ -371,7 +371,14 @@ module Gullah
         s.next
       end
     end
-    initial_segments.flat_map(&:results)
+    if segments.length > 1
+      # pass the results through a new hopper to filter out duds
+      hopper = Hopper.new filters, nil
+      initial_segments.flat_map(&:results).each { |p| hopper << p }
+      hopper.dump.each(&:initialize_summaries)
+    else
+      segments.first.results
+    end
   end
 
   ##

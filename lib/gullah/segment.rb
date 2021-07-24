@@ -43,7 +43,7 @@ module Gullah
     def next
       return false if @done
 
-      current_size = @hopper.size
+      start_size = @hopper.size
       catch :done do
         while (iterator = @bases.pop)
           unless @hopper.continuable?(iterator.parse)
@@ -63,8 +63,8 @@ module Gullah
           end
         end
       end
-      new_size = @hopper.size
-      if new_size == current_size
+      end_size = @hopper.size
+      if end_size == start_size
         @done = true
         false
       else

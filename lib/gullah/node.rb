@@ -12,7 +12,7 @@ module Gullah
     ##
     # A hash of attributes, including indicators of tests that passed or failed.
     # The +atts+ alias of +attributes+ exists for when a more telegraphic coding style is useful.
-    attr_reader :attributes
+    attr_reader :attributes # TODO collect the keys users shouldn't use and document them
 
     ##
     # The children of this node, if any, as an array.

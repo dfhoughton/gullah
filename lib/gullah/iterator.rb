@@ -44,7 +44,7 @@ module Gullah
       while @node
         @rules ||= @starters[@node.name]
         r = @rules&.[] @rule_index
-        return r if r && r.seeking == @node.name
+        return r if r
 
         # the rules for this node are used up; try the next one
         @rule_index = 0

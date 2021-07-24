@@ -79,6 +79,10 @@ module Gullah
       return true if @first || @filters.none?
 
       @thresholds.slice(:correctness, :size).each do |f, limit|
+        # completion is more important than size, so ignore size unless we have
+        # a single complete parse already
+        next if f == :size && @thresholds[:completion]&.>(1)
+
         value = case f
                 when :correctness
                   parse.correctness_count

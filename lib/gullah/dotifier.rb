@@ -44,7 +44,7 @@ module Gullah
         f.puts "\tsubgraph {"
         f.puts "\t\trank=\"same\""
         parse.roots.flat_map(&:leaves).reject(&:ignorable?).each do |leaf|
-          f.puts "\t\t#{name(leaf)}"
+          f.puts "\t\t#{leaf_name(leaf)}"
         end
         f.puts "\t}"
         f.puts '}'
@@ -55,7 +55,13 @@ module Gullah
     def tree(node, f)
       return if node.ignorable?
 
-      f.puts "\t#{name(node)} #{node_attributes(node)}"
+      nn = name(node)
+      f.puts "\t#{nn} #{node_attributes(node)}"
+      if node.leaf?
+        ln = leaf_name(node)
+        f.puts "\t#{ln} [label=#{node.text.inspect}]"
+        f.puts "\t#{nn} -- #{ln}"
+      end
       Array(node.atts[:satisfied_ancestor]).each do |_, loc, *|
         child = node.find loc
         add_edge node, child, :success, true
@@ -65,7 +71,7 @@ module Gullah
         add_edge node, child, :error, true
       end
       Array(node.children&.reject(&:ignorable?)).each do |child|
-        f.puts "\t#{name(node)} -- #{name(child)}#{edge_attributes node, child}"
+        f.puts "\t#{nn} -- #{name(child)}#{edge_attributes node, child}"
         tree(child, f)
       end
     end
@@ -91,7 +97,7 @@ module Gullah
     end
 
     def node_attributes(node)
-      atts = ["label=#{(node.leaf? ? node.text : node.name.to_s).inspect}"]
+      atts = ["label=#{node.name.to_s.inspect}"]
       if node.trash?
         atts << 'color=red'
         atts << 'shape=box'
@@ -111,6 +117,11 @@ module Gullah
     def name(node)
       offset, height = node.position
       "n_#{offset}_#{height}"
+    end
+
+    def leaf_name(node)
+      offset, height = node.position
+      "l_#{offset}_#{height}"
     end
   end
 end

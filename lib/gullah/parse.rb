@@ -196,16 +196,12 @@ module Gullah
     # it would be conceptually simpler to lazily initialize the summary, but this
     # gives us a speed boost
     def initialize_summaries
-      @summary = roots.each { |n| n._summary = n.name }.map(&:summary).join(';')
+      @summary = roots.each { |n| n._summary = n.name unless n.summary }.map(&:summary).join(';')
       self
     end
 
     def _summary=(str)
       @summary = str
-    end
-
-    def _roots=(roots)
-      @roots = roots
     end
 
     class NodeIterator # :nodoc:
