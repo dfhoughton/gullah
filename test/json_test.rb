@@ -18,7 +18,7 @@ class JsonTest < Minitest::Test
     # better would be to convert the AST after parsing
 
     rule :object, '"{" key_value_pair* last_pair | empty_object', process: :objectify
-    rule :last_pair, 'key ":" json following_brace', process: :inherit_json_value # , preconditions: %i[following_brace]
+    rule :last_pair, 'key ":" json following_brace', process: :inherit_json_value
     rule :key_value_pair, 'key ":" json ","', process: :inherit_json_value
     rule :array, '"[" array_item* json? "]"', process: :arrayify
     rule :json, 'complex | simple', process: :inherit_value
@@ -27,10 +27,6 @@ class JsonTest < Minitest::Test
     rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value
 
     leaf :boolean, /\b(true|false)\b/, process: ->(n) { n.atts[:value] = n.text == 'true' }
-    leaf :following_brace, /}/
-    leaf :empty_object, /\{\s*\}/
-    leaf :key, /'(?:[^'\\]|\\.)*'(?=\s*:)/, process: :clean_string
-    leaf :key, /"(?:[^"\\]|\\.)*"(?=\s*:)/, process: :clean_string
     leaf :string, /'(?:[^'\\]|\\.)*'(?!\s*:)/, process: :clean_string
     leaf :string, /"(?:[^"\\]|\\.)*"(?!\s*:)/, process: :clean_string
     leaf :null, /\bnull\b/, process: ->(n) { n.atts[:value] = nil }
@@ -38,10 +34,11 @@ class JsonTest < Minitest::Test
     leaf :float, /\b\d+\.\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
     leaf :integer, /\b[1-9]\d*\b(?!\.\d)/, process: ->(n) { n.atts[:value] = n.text.to_i }
 
-    def following_brace(_name, children)
-      c = children.last
-      c.full_text[c.end..-1] =~ /\A\s*\}/
-    end
+    # terrible, horrible, no good, very bad hacks to reduce backtracking
+    leaf :following_brace, /}/
+    leaf :empty_object, /\{\s*\}/
+    leaf :key, /'(?:[^'\\]|\\.)*'(?=\s*:)/, process: :clean_string
+    leaf :key, /"(?:[^"\\]|\\.)*"(?=\s*:)/, process: :clean_string
 
     def inherit_json_value(node)
       node.atts[:value] = node.children.find { |n| n.name == :json }.atts[:value]
