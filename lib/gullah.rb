@@ -602,7 +602,7 @@ module Gullah
       rescue ::NameError
         raise Error, "#{precond} is not defined"
       end
-      raise Error, "#{precond} must take two arguments" unless 2 == m.arity
+      raise Error, "#{precond} must take two arguments" unless m.arity == 2
 
       m
     end

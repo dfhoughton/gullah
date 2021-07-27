@@ -17,8 +17,8 @@ class JsonTest < Minitest::Test
     # this is *not* the most efficient way to deserialize the JSON string
     # better would be to convert the AST after parsing
 
-    rule :object, '"{" key_value_pair* last_pair? "}"', process: :objectify
-    rule :last_pair, 'key ":" json', process: :inherit_json_value, preconditions: %i[following_brace]
+    rule :object, '"{" key_value_pair* last_pair | empty_object', process: :objectify
+    rule :last_pair, 'key ":" json following_brace', process: :inherit_json_value # , preconditions: %i[following_brace]
     rule :key_value_pair, 'key ":" json ","', process: :inherit_json_value
     rule :array, '"[" array_item* json? "]"', process: :arrayify
     rule :json, 'complex | simple', process: :inherit_value
@@ -27,6 +27,8 @@ class JsonTest < Minitest::Test
     rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value
 
     leaf :boolean, /\b(true|false)\b/, process: ->(n) { n.atts[:value] = n.text == 'true' }
+    leaf :following_brace, /}/
+    leaf :empty_object, /\{\s*\}/
     leaf :key, /'(?:[^'\\]|\\.)*'(?=\s*:)/, process: :clean_string
     leaf :key, /"(?:[^"\\]|\\.)*"(?=\s*:)/, process: :clean_string
     leaf :string, /'(?:[^'\\]|\\.)*'(?!\s*:)/, process: :clean_string
@@ -36,13 +38,8 @@ class JsonTest < Minitest::Test
     leaf :float, /\b\d+\.\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
     leaf :integer, /\b[1-9]\d*\b(?!\.\d)/, process: ->(n) { n.atts[:value] = n.text.to_i }
 
-    def following_brace_test(node)
-      node.full_text[node.end..-1] =~ /\A\s*\}/ ? :pass : :fail
-    end
-
     def following_brace(_name, children)
       c = children.last
-      # byebug
       c.full_text[c.end..-1] =~ /\A\s*\}/
     end
 
@@ -66,34 +63,34 @@ class JsonTest < Minitest::Test
     end
 
     def objectify(node)
-      node.atts[:value] = node.children.reject(&:leaf?).map do |pair|
-        key, _, value = pair.children
-        [key.atts[:value], value.atts[:value]]
-      end.to_h
+      node.atts[:value] = if node.children.first.name == :empty_object
+                            {}
+                          else
+                            node.children.reject(&:leaf?).map do |pair|
+                              key, _, value = pair.children
+                              [key.atts[:value], value.atts[:value]]
+                            end.to_h
+                          end
     end
   end
 
   def test_various
     [
-      # [],
-      # {},
-      # 1,
-      # 1.1,
-      # 1.2345678901e10,
-      # 'string',
-      # '"string"',
-      # [1],
-      # { 'a' => 1 },
-      # { 'a' => 1, 'b' => 2 },
-      { 'foo' => [1, 2, true], 'bar' => ['baz'], 'baz' => { 'v1' => nil, 'v2' => [], 'v3' => 'corge' } },
-      # ['2', { 'a' => false }],
-      # [1, nil, '2', { 'a' => false }]
+      [],
+      {},
+      1,
+      1.1,
+      1.2345678901e10,
+      'string',
+      '"string"',
+      [1],
+      { 'a' => 1 },
+      { 'a' => 1, 'b' => 2 },
+      ['2', { 'a' => false }],
+      [1, nil, '2', { 'a' => false }]
     ].each do |val|
       json = JSON.unparse(val)
-      parses = clock(json) do
-        # byebug
-        Gson.parse json
-      end
+      parses = clock(json) { Gson.parse json }
       assert_equal 1, parses.length, "unambiguous: #{json}"
       parse = parses.first
       root = parse.roots.first
@@ -101,16 +98,29 @@ class JsonTest < Minitest::Test
     end
   end
 
+  # more complex patterns
+  def test_monsters
+    [
+      [[[[1, 2, 3]]]],
+      { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => 1 } } } } } } } } },
+      { 'foo' => [1, 2, true], 'bar' => ['baz'], 'baz' => { 'v1' => nil, 'v2' => [], 'v3' => 'corge' } }
+    ].each do |val|
+      json = JSON.unparse(val)
+      parse = clock(json) { Gson.first json }
+      root = parse.roots.first
+      assert_equal val, root.atts[:value], "parsed value correctly: #{json}"
+    end
+  end
+
   private
 
-  def clock(id, &block)
+  # for catching really slow stuff
+  def clock(id)
     t1 = Time.now
     value = yield
     t2 = Time.now
     delta = t2.to_f - t1.to_f
-    if delta > 1
-      puts "\n#{id}: #{delta} seconds"
-    end
+    puts "\n#{id}: #{delta} seconds" if delta > 1
     value
   end
 end
