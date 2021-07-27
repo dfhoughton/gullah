@@ -37,7 +37,8 @@ class JsonTest < Minitest::Test
     def not_key(node)
       return :pass if node.children.first.name != :string
 
-      /\s*:/.match(node.full_text, node.end)&.begin(0) == node.end ? :fail : :pass
+      node.full_text[node.end..-1] =~ /\A\s*:/ ? :fail : :pass
+      # /\s*:/.match(node.full_text, node.end)&.begin(0) == node.end ? :fail : :pass
     end
 
     def inherit_json_value(node)
@@ -84,7 +85,13 @@ class JsonTest < Minitest::Test
       [1, nil, '2', { 'a' => false }]
     ].each do |val|
       json = JSON.unparse(val)
+      t1 = Time.now
       parses = Gson.parse json
+      t2 = Time.now
+      delta = t2.to_f - t1.to_f
+      if delta > 1
+        puts "#{json}: #{delta}"
+      end
       assert_equal 1, parses.length, "unambiguous: #{json}"
       parse = parses.first
       root = parse.roots.first
