@@ -18,27 +18,32 @@ class JsonTest < Minitest::Test
     # better would be to convert the AST after parsing
 
     rule :object, '"{" key_value_pair* last_pair? "}"', process: :objectify
-    rule :last_pair, 'string ":" json', process: :inherit_json_value
-    rule :key_value_pair, 'string ":" json ","', process: :inherit_json_value
+    rule :last_pair, 'key ":" json', process: :inherit_json_value, tests: %i[following_brace]
+    rule :key_value_pair, 'key ":" json ","', process: :inherit_json_value
     rule :array, '"[" array_item* json? "]"', process: :arrayify
     rule :json, 'complex | simple', process: :inherit_value
     rule :complex, 'array | object', process: :inherit_value
     rule :array_item, 'json ","', process: :inherit_value
-    rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value, tests: %i[not_key]
+    rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value#, tests: %i[not_key]
 
     leaf :boolean, /\b(true|false)\b/, process: ->(n) { n.atts[:value] = n.text == 'true' }
-    leaf :string, /'(?:[^'\\]|\\.)*'/, process: :clean_string
-    leaf :string, /"(?:[^"\\]|\\.)*"/, process: :clean_string
+    leaf :key, /'(?:[^'\\]|\\.)*'(?=\s*:)/, process: :clean_string
+    leaf :key, /"(?:[^"\\]|\\.)*"(?=\s*:)/, process: :clean_string
+    leaf :string, /'(?:[^'\\]|\\.)*'(?!\s*:)/, process: :clean_string
+    leaf :string, /"(?:[^"\\]|\\.)*"(?!\s*:)/, process: :clean_string
     leaf :null, /\bnull\b/, process: ->(n) { n.atts[:value] = nil }
     leaf :si, /\b\d\.\d+e[1-9]\d*\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
     leaf :float, /\b\d+\.\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
-    leaf :integer, /\b[1-9]\d*\b/, process: ->(n) { n.atts[:value] = n.text.to_i }
+    leaf :integer, /\b[1-9]\d*\b(?!\.\d)/, process: ->(n) { n.atts[:value] = n.text.to_i }
+
+    def following_brace(node)
+      node.full_text[node.end..-1] =~ /\A\s*\}/ ? :pass : :fail
+    end
 
     def not_key(node)
       return :pass if node.children.first.name != :string
 
       node.full_text[node.end..-1] =~ /\A\s*:/ ? :fail : :pass
-      # /\s*:/.match(node.full_text, node.end)&.begin(0) == node.end ? :fail : :pass
     end
 
     def inherit_json_value(node)
@@ -70,32 +75,42 @@ class JsonTest < Minitest::Test
 
   def test_various
     [
-      [],
-      {},
-      1,
-      1.1,
-      1.2345678901e10,
-      'string',
-      '"string"',
-      [1],
-      { 'a' => 1 },
-      { 'a' => 1, 'b' => 2 },
+      # [],
+      # {},
+      # 1,
+      # 1.1,
+      # 1.2345678901e10,
+      # 'string',
+      # '"string"',
+      # [1],
+      # { 'a' => 1 },
+      # { 'a' => 1, 'b' => 2 },
       { 'foo' => [1, 2, true], 'bar' => ['baz'], 'baz' => { 'v1' => nil, 'v2' => [], 'v3' => 'corge' } },
-      ['2', { 'a' => false }],
-      [1, nil, '2', { 'a' => false }]
+      # ['2', { 'a' => false }],
+      # [1, nil, '2', { 'a' => false }]
     ].each do |val|
       json = JSON.unparse(val)
-      t1 = Time.now
-      parses = Gson.parse json
-      t2 = Time.now
-      delta = t2.to_f - t1.to_f
-      if delta > 1
-        puts "#{json}: #{delta}"
+      parses = clock(json) do
+        # byebug
+        Gson.parse json
       end
       assert_equal 1, parses.length, "unambiguous: #{json}"
       parse = parses.first
       root = parse.roots.first
       assert_equal val, root.atts[:value], "parsed value correctly: #{json}"
     end
+  end
+
+  private
+
+  def clock(id, &block)
+    t1 = Time.now
+    value = yield
+    t2 = Time.now
+    delta = t2.to_f - t1.to_f
+    if delta > 1
+      puts "\n#{id}: #{delta} seconds"
+    end
+    value
   end
 end
