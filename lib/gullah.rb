@@ -192,7 +192,7 @@ end
 # single scan.
 #
 # So if you have a particular data format or language you want to handle efficiently and you expect in most
-# cases you will succeed without ambiguity on a single pass, Gullah may not be the tool you want. But if you
+# cases you will succeed without ambiguity on a single pass, Gullah is not the tool you want. But if you
 # want to recover gracefully, it may be that a second pass with Gullah to produce the least bad parse and
 # some information about how things went wrong is useful.
 
@@ -222,15 +222,15 @@ module Gullah
   #   rule :or_maybe, 'oho', process: :some_arity_one_method_in_class_extending_gullah
   #
   #   rule :tests, 'test me', tests: %i[node structure]
-  def rule(name, body, tests: [], process: nil)
+  def rule(name, body, tests: [], preconditions: [], process: nil)
     init
     init_check(name)
     name = name.to_sym
     body = body.to_s.strip.gsub(/\s+/, ' ')
-    return if dup_check(:rule, name, body, tests)
+    return if dup_check(:rule, name, body, tests + preconditions)
 
     tests << [process] if process
-    r = Rule.new name, body, tests: tests
+    r = Rule.new name, body, tests: tests, preconditions: preconditions
     subrules = r.subrules || [r]
     subrules.each do |sr|
       @rules << sr
@@ -281,8 +281,8 @@ module Gullah
   #   def not_bobbing(n)
   #     /bing/.match(n.full_text, n.end) ? :fail : :pass
   #   end
-  def leaf(name, rx, tests: [], process: nil)
-    _leaf name, rx, ignorable: false, tests: tests, process: process
+  def leaf(name, rx, tests: [], preconditions: [], process: nil)
+    _leaf name, rx, ignorable: false, tests: tests, process: process, preconditions: preconditions
   end
 
   ##
@@ -292,8 +292,8 @@ module Gullah
   # Unless +keep_whitespace+ is called, an +ignore+ rule covering whitespace will be
   # generated automatically. It's name will be "_ws", or, if that is taken, "_wsN", where
   # N is an integer sufficient to make this name unique among the rules of the grammar.
-  def ignore(name, rx, tests: [], process: nil)
-    _leaf name, rx, ignorable: true, tests: tests, process: process
+  def ignore(name, rx, tests: [], preconditions: [], process: nil)
+    _leaf name, rx, ignorable: true, tests: tests, process: process, preconditions: []
   end
 
   ##
@@ -307,8 +307,8 @@ module Gullah
   #
   #   # clause boundary pattern
   #   boundary :terminal, /[.!?](?=\s*\z|\s+"?\p{Lu})|[:;]/
-  def boundary(name, rx, tests: [], process: nil)
-    _leaf name, rx, boundary: true, tests: tests, process: process
+  def boundary(name, rx, tests: [], preconditions: [], process: nil)
+    _leaf name, rx, boundary: true, tests: tests, preconditions: preconditions, process: process
   end
 
   ##
@@ -403,6 +403,7 @@ module Gullah
     @leaves = []
     @starters = {}
     @tests = {}
+    @preconditions = {}
     @committed = false
     @do_unary_branch_check = nil
   end
@@ -425,7 +426,8 @@ module Gullah
     # vet on commit so rule definition is order-independent
     [@leaves, @rules].flatten.each do |r|
       vetted_tests = r.tests.map { |t| vet t }
-      r._post_init(vetted_tests)
+      vetted_preconds = r.preconditions.map { |pc| vet_precondition pc }
+      r._post_init(vetted_tests, vetted_preconds)
     end
     completeness_check
     loop_check
@@ -490,14 +492,14 @@ module Gullah
   end
 
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
-  def _leaf(name, rx, ignorable: false, boundary: false, tests: [], process: nil)
+  def _leaf(name, rx, ignorable: false, boundary: false, tests: [], preconditions: [], process: nil)
     init
     init_check(name)
     name = name.to_sym
-    return if dup_check(:leaf, name, rx, tests)
+    return if dup_check(:leaf, name, rx, tests + preconditions)
 
     tests << [process] if process
-    @leaves << Leaf.new(name, rx, ignorable: ignorable, boundary: boundary, tests: tests)
+    @leaves << Leaf.new(name, rx, ignorable: ignorable, boundary: boundary, tests: tests, preconditions: preconditions)
   end
 
   # convert raw text into one or more arrays of leaf nodes
@@ -587,6 +589,20 @@ module Gullah
         raise Error, "#{test} is not defined"
       end
       raise Error, "#{test} must take either 1 or two arguments" unless (1..2).include? m.arity
+
+      m
+    end
+  end
+
+  # vet preconditions
+  def vet_precondition(precond)
+    @preconditions[precond] ||= begin
+      begin
+        m = singleton.method(precond)
+      rescue ::NameError
+        raise Error, "#{precond} is not defined"
+      end
+      raise Error, "#{precond} must take two arguments" unless 2 == m.arity
 
       m
     end

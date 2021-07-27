@@ -8,12 +8,13 @@ module Gullah
     # tests -- tests that must be run after a match to determine whether the node is a keeper
     # ancestor_tests -- tests that must be run after an ancestor match
     # subrules/atoms -- if you have no subrules, you have a sequence of atoms
-    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms
+    attr_reader :name, :body, :tests, :ancestor_tests, :subrules, :atoms, :preconditions
 
-    def initialize(name, body, tests: [])
+    def initialize(name, body, tests: [], preconditions: [])
       @name = name
       @body = body
       @tests = tests
+      @preconditions = preconditions
       if body =~ /\|/
         @subrules = body.split(/ ?\| ?/).map do |subrule|
           Rule.new(name, subrule, tests: tests)
@@ -81,8 +82,9 @@ module Gullah
 
     ## ADVISORILY PRIVATE
 
-    def _post_init(tests)
+    def _post_init(tests, preconditions)
       @tests, @ancestor_tests = tests.partition { |m| m.arity == 1 }
+      @preconditions = preconditions
     end
   end
 end

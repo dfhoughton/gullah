@@ -18,13 +18,13 @@ class JsonTest < Minitest::Test
     # better would be to convert the AST after parsing
 
     rule :object, '"{" key_value_pair* last_pair? "}"', process: :objectify
-    rule :last_pair, 'key ":" json', process: :inherit_json_value, tests: %i[following_brace]
+    rule :last_pair, 'key ":" json', process: :inherit_json_value, preconditions: %i[following_brace]
     rule :key_value_pair, 'key ":" json ","', process: :inherit_json_value
     rule :array, '"[" array_item* json? "]"', process: :arrayify
     rule :json, 'complex | simple', process: :inherit_value
     rule :complex, 'array | object', process: :inherit_value
     rule :array_item, 'json ","', process: :inherit_value
-    rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value#, tests: %i[not_key]
+    rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value
 
     leaf :boolean, /\b(true|false)\b/, process: ->(n) { n.atts[:value] = n.text == 'true' }
     leaf :key, /'(?:[^'\\]|\\.)*'(?=\s*:)/, process: :clean_string
@@ -36,14 +36,14 @@ class JsonTest < Minitest::Test
     leaf :float, /\b\d+\.\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
     leaf :integer, /\b[1-9]\d*\b(?!\.\d)/, process: ->(n) { n.atts[:value] = n.text.to_i }
 
-    def following_brace(node)
+    def following_brace_test(node)
       node.full_text[node.end..-1] =~ /\A\s*\}/ ? :pass : :fail
     end
 
-    def not_key(node)
-      return :pass if node.children.first.name != :string
-
-      node.full_text[node.end..-1] =~ /\A\s*:/ ? :fail : :pass
+    def following_brace(_name, children)
+      c = children.last
+      # byebug
+      c.full_text[c.end..-1] =~ /\A\s*\}/
     end
 
     def inherit_json_value(node)

@@ -96,6 +96,11 @@ module Gullah
     end
 
     def vet(parse, i, offset, rule, do_unary_branch_check)
+      preconditions_satisfied = rule.preconditions.all? do |pc|
+        pc.call rule.name, parse.roots[i...offset]
+      end
+      return unless preconditions_satisfied
+
       candidate = "#{rule.name}[#{parse.roots[i...offset].map(&:summary).join(',')}]"
       unvetted_summary = [
         parse.roots[0...i].map(&:summary) +
