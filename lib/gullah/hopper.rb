@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 module Gullah
-  # to be regarded as a non-public class
-  # a Hopper keeps completed parses, dumping inferior ones as desired
+  # a Hopper keeps completed parses, deleting inferior ones as better parses are found
   # this facilitates efficient memory use and parsing
   class Hopper # :nodoc:
     def initialize(filters, number_sought)
@@ -81,6 +80,7 @@ module Gullah
       @thresholds.slice(:correctness, :size).each do |f, limit|
         # completion is more important than size, so ignore size unless we have
         # a single complete parse already
+        # TODO if we *do* have a single completed parse, we should throw in more tests
         next if f == :size && @thresholds[:completion]&.>(1)
 
         value = case f

@@ -9,7 +9,7 @@ require 'byebug'
 
 # test all the tree walking methods on node
 class TreeWalkingTest < Minitest::Test
-  class Binary
+  class Quaternary
     extend Gullah
 
     rule :b, 'a{4} | b{4}'
@@ -18,7 +18,7 @@ class TreeWalkingTest < Minitest::Test
   end
 
   def test_tree_walking
-    parses = Binary.parse '1 2 3 4  5 6 7 8  9 10 11 12  13 14 15 16'
+    parses = Quaternary.parse '1 2 3 4  5 6 7 8  9 10 11 12  13 14 15 16'
     assert_equal 1, parses.length, 'only one optimal parse'
     parse = parses.first
     assert_equal 1, parse.roots.length, 'parse has a root node'

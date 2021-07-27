@@ -30,7 +30,91 @@ end
 #
 # = Syntax
 #
+# This second describes only the syntax of Gullah rules, not the entire API. Gullah
+# syntax is generally the more familiar subset of the rules of regular expressions.
 #
+# - sequence
+#
+#     rule :foo, 'bar baz' # one thing follows another
+#
+# - alternation
+#
+#     rule :foo, 'bar | baz' # separate alternates with pipes
+#     rule :foo, 'plugh+'    # or simply define it additional times (not regex grammar)
+#
+# - repetition
+#
+#     rule :option,  'foo bar?' # ?     means "one or none"
+#     rule :plural,  'foo+'     # +     means "one or more"
+#     rule :options, 'foo bar*' # *     means "zero or more"
+#     rule :n,       'foo{2}'   # {n}   means "exactly n"
+#     rule :n_plus,  'foo{2,}'  # {n,}  means "n or more"
+#     rule :n_m,     'foo{2,3}' # {n,m} means "between n and m"
+#
+# - literals
+#
+#     rule :foo,  '"(" bar ")"'
+#
+#   Literals allow you to avoid defining simple leaf rules. The above is basically
+#   shorthand for
+#
+#     rule :foo, 'left_paren bar right_paren'
+#     leaf :left_paren, /\(/
+#     leaf :right_paren, /\)/
+#
+#   You may use either single or double quotes to define literals. You may also use
+#   escape sequences to include random characters in literals. Literals may have
+#   repetition suffixes.
+#
+# - grouping
+#
+#     rule :foo, 'bar baz'
+#
+#   Surprise! There is no grouping syntax in Gullah. Every rule is in effect a named group.
+#   So really there are no anonymous groups in Gullah and grouping doesn't involve parentheses.
+#
+#
+# You may notice that there is a <tt>foo+</tt> rule but not <tt>foo*</tt> rule. Every
+# rule must consume at least one child node to appear in the parse tree.
+#
+# You also may wonder about whitespace handling. See +ignore+ below.
+#
+# = Preconditions
+#
+# The first step in adding a node to a parse tree is collecting a sequence of child
+# nodes that match some rule. If the rule is
+#
+#   rule :foo, 'bar+'
+#
+# you've collected a sequence of +bar+ nodes. If there is some condition you need this
+# node to respect *which is dependent only on the rule and the child nodes* which you
+# can't express, or not easily, in the rule itself, you can define one or more
+# preconditions. E.g.,
+#
+#   rule :foo, 'bar+', preconditions: %i[fibonacci]
+#
+#   def fibonacci(_name, children)
+#     is_fibonacci_number? children.length # assumes we've defined is_fibonacci_number?
+#   end
+#
+# A precondition is just an instance method defined in the Gullah-fied class with an arity
+# of two: it takes the rule's name, a symbol, as its first argument, and the prospective
+# child nodes, an array, as its second. If it returns a truthy value, the precondition holds
+# and the node can be made. Otherwise, Gullah tries the next thing.
+#
+# == Preconditions versus Tests
+#
+# Preconditions are like tests (see below). They are further conditions on the building of
+# nodes in a parse tree. Why does Gullah provide both? There are several reasons:
+#
+# - Preconditions are tested before the node is build, avoiding the overhead of cloning
+#   nodes, so they are considerably lighter-weight.
+# - Because they are tested *before* the node is built, they result in no partially erroneous
+#   parse in the event of failure, so they leave nothing Gullah will attempt to improve further
+#   at the cost of time.
+# - But they don't leave a trace, so there's nothing to examine in the event of failure.
+# - And they concern only the subtree rooted at the prospective node, so they cannot express
+#   structural relationships between this node and nodes which do not descend from it.
 #
 # = Tests
 #
@@ -109,7 +193,14 @@ end
 # Only structure rules may return +nil+. This indicates that the preconditions for the test are not
 # present, in which case the test will be deferred until the node acquires a new ancestor.
 #
-# Tests short-circuit! If a node has many tests, they run until one fails
+# Tests short-circuit! If a node has many tests, they run until one fails.
+#
+# == Disadvantages of Tests
+#
+# All this being said, when tests *fail* they do so after their node has been built and added
+# to a parse. This means their partially broken parse remains a candidate as Gullah tries to
+# find the least bad way to parse the text it was given. This can be computationally expensive.
+# If you can make do with preconditions (see above), they are the better choice.
 #
 # = Processors
 #
@@ -235,6 +326,8 @@ module Gullah
     subrules.each do |sr|
       @rules << sr
       sr.starters.each do |r, n|
+        raise Error, "a subrule of #{name} can consume no nodes" unless n.min_consumption.positive?
+
         (@starters[r] ||= []) << n
       end
     end
@@ -588,7 +681,7 @@ module Gullah
       rescue ::NameError
         raise Error, "#{test} is not defined"
       end
-      raise Error, "#{test} must take either 1 or two arguments" unless (1..2).include? m.arity
+      raise Error, "#{test} must take either one or two arguments" unless (1..2).include? m.arity
 
       m
     end
