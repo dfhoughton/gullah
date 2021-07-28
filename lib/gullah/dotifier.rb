@@ -97,7 +97,7 @@ module Gullah
     end
 
     def node_attributes(node)
-      atts = ["label=#{node.name.to_s.inspect}"]
+      atts = ["label=#{node.trash? ? 'trash' : node.name.to_s.inspect}"]
       if node.trash?
         atts << 'color=red'
         atts << 'shape=box'

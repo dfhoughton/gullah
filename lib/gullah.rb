@@ -71,13 +71,14 @@ end
 #     rule :foo, 'bar baz'
 #
 #   Surprise! There is no grouping syntax in Gullah. Every rule is in effect a named group.
-#   So really there are no anonymous groups in Gullah and grouping doesn't involve parentheses.
+#   So it might be better said that there are no anonymous groups in Gullah and grouping
+#   doesn't involve parentheses.
 #
 #
 # You may notice that there is a <tt>foo+</tt> rule but not <tt>foo*</tt> rule. Every
 # rule must consume at least one child node to appear in the parse tree.
 #
-# You also may wonder about whitespace handling. See +ignore+ below.
+# You also may wonder about whitespace handling. See +ignore+ and +keep_whitespace+ below.
 #
 # = Preconditions
 #
@@ -115,6 +116,15 @@ end
 # - But they don't leave a trace, so there's nothing to examine in the event of failure.
 # - And they concern only the subtree rooted at the prospective node, so they cannot express
 #   structural relationships between this node and nodes which do not descend from it.
+#
+#   *Note*, the cannot tests relationships between *nodes* outside the prospective node's
+#   subtree, but they can test its relationships to adjoining *characters*, so they can
+#   implement lookarounds. For instance:
+#
+#     def colon_after(_name, children)
+#       c = children.last
+#       c.full_text[c.end..-1] =~ /\A\s*:/ # equivalent to (?=\s*:)
+#     end
 #
 # = Tests
 #
@@ -396,7 +406,7 @@ module Gullah
   # Boundaries are extremely valuable for reducing the complexity of parsing, because Gullah
   # knows no parse can span a boundary. Trash nodes -- nodes that correspond to character
   # sequences unmatched by any leaf rule -- are also boundaries, though most likely erroneous
-  # boundaries.
+  # ones.
   #
   #   # clause boundary pattern
   #   boundary :terminal, /[.!?](?=\s*\z|\s+"?\p{Lu})|[:;]/
@@ -648,7 +658,7 @@ module Gullah
   end
 
   def trash_rule
-    @trash_rule ||= Leaf.new(:"", nil, ignorable: true)
+    @trash_rule ||= Leaf.new(:"", nil)
   end
 
   def singleton

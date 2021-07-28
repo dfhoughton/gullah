@@ -97,7 +97,7 @@ class BasicTest < Minitest::Test
     assert_equal 8, parse.roots.length, 'there are 8 nodes in the parse'
     assert parse.roots.all?(&:leaf?), 'all nodes are leaf nodes'
     assert_equal 3, parse.roots.select { |n| n.name == :ws }.count, 'there are 3 whitespace nodes'
-    assert_equal 4, parse.roots.select(&:ignorable?).count, 'there are 4 ignorable nodes'
+    assert_equal 3, parse.roots.select(&:ignorable?).count, 'there are 3 ignorable nodes'
     assert_equal 4, parse.roots.select { |n| n.name == :word }.count, 'there are 4 word nodes'
     assert_equal 1, parse.roots.select(&:trash?).count, 'there is 1 trash node'
     last_node = parse.roots.last
