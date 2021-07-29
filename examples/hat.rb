@@ -12,11 +12,11 @@ class Englishish
   rule :PP,         'prep NP'
   rule :Possessive, 'NP pe'
 
-  leaf :the,    /\bthe\b/
-  leaf :pe,     /(?<=[a-rt-z])'s|(?<=s)'/
-  leaf :Proper, /\bEngland\b/
-  leaf :N,      /\b(?:queen|hat)\b/
-  leaf :prep,   /\bof\b/
+  leaf :the,    /\bthe\b/i
+  leaf :pe,     /(?<=[a-rt-z])'s|(?<=s)'/i
+  leaf :Proper, /\bE(?i)ngland\b/
+  leaf :N,      /\b(?:queen|hat)\b/i
+  leaf :prep,   /\bof\b/i
 end
 
 Englishish.parse("the queen of England's hat").each_with_index do |parse, i|
