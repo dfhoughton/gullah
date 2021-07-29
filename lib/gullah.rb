@@ -329,6 +329,9 @@ module Gullah
   #
   #   rule :tests, 'test me', tests: %i[node structure]
   def rule(name, body, tests: [], preconditions: [], process: nil)
+    raise Error, 'tests must be an array' unless tests.is_a? Array
+    raise Error, 'preconditions must be an array' unless preconditions.is_a? Array
+
     init
     init_check(name)
     name = name.to_sym
@@ -599,6 +602,9 @@ module Gullah
 
   # a tokenization rule to divide the raw text into tokens and separators ("ignorable" tokens)
   def _leaf(name, rx, ignorable: false, boundary: false, tests: [], preconditions: [], process: nil)
+    raise Error, 'tests must be an array' unless tests.is_a? Array
+    raise Error, 'preconditions must be an array' unless preconditions.is_a? Array
+
     init
     init_check(name)
     name = name.to_sym
