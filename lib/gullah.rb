@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'set'
 %w[version atom error hopper leaf node trash boundary parse rule iterator dotifier segment].each do |s|
   require "gullah/#{s}"
 end
@@ -44,12 +45,18 @@ end
 #
 # - repetition
 #
-#     rule :option,  'foo bar?' # ?     means "one or none"
+#     rule :option,  'foo?'     # ?     means "one or none"
 #     rule :plural,  'foo+'     # +     means "one or more"
-#     rule :options, 'foo bar*' # *     means "zero or more"
+#     rule :options, 'foo*'     # *     means "zero or more"
 #     rule :n,       'foo{2}'   # {n}   means "exactly n"
 #     rule :n_plus,  'foo{2,}'  # {n,}  means "n or more"
 #     rule :n_m,     'foo{2,3}' # {n,m} means "between n and m"
+#
+#   Note, though you can define rules like +option+ and +options+, a rule can't add
+#   a node to the parse tree if it matches nothing. These repetition suffixes are
+#   are more useful as part of a sequence. In practice <tt>foo?<tt> will be a less
+#   efficient version of <tt>foo</tt>, and <tt>foo*</tt>, a less efficient version of
+#   <tt>foo+</tt>.
 #
 # - literals
 #
@@ -74,11 +81,9 @@ end
 #   So it might be better said that there are no anonymous groups in Gullah and grouping
 #   doesn't involve parentheses.
 #
-#
-# You may notice that there is a <tt>foo+</tt> rule but not <tt>foo*</tt> rule. Every
-# rule must consume at least one child node to appear in the parse tree.
-#
-# You also may wonder about whitespace handling. See +ignore+ and +keep_whitespace+ below.
+# You may be wondering about whitespace handling. See +ignore+ and +keep_whitespace+ below.
+# The short version of it is that Gullah creates an ignorable whitespace leaf rule by
+# default.
 #
 # = Preconditions
 #
@@ -336,8 +341,6 @@ module Gullah
     subrules.each do |sr|
       @rules << sr
       sr.starters.each do |r, n|
-        raise Error, "a subrule of #{name} can consume no nodes" unless n.min_consumption.positive?
-
         (@starters[r] ||= []) << n
       end
     end
@@ -605,7 +608,7 @@ module Gullah
     @leaves << Leaf.new(name, rx, ignorable: ignorable, boundary: boundary, tests: tests, preconditions: preconditions)
   end
 
-  # convert raw text into one or more arrays of leaf nodes
+  # convert raw text into one or more arrays of leaf nodes -- maximally unreduced parses
   def lex(text)
     bases = [[0, Parse.new(text)]]
     done = []
@@ -641,7 +644,7 @@ module Gullah
         bases << [trash_offset, new_parse]
       end
     end
-    done
+    done # any array of Parses
   end
 
   # slice text into independent segments
@@ -668,7 +671,7 @@ module Gullah
   # check for duplicate rule/leaf
   # return true if perfect duplicate, false if novel
   def dup_check(type, name, body, tests)
-    set = type == :leaf ? (@leaf_dup_check ||= Set.new) : (@rule_dup_check ||= Set.new)
+    set = type == :leaf ? (@leaf_dup_check ||= ::Set.new) : (@rule_dup_check ||= ::Set.new)
     key = [name, body, tests.sort]
     if set.include? key
       true

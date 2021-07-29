@@ -100,7 +100,8 @@ class JsonTest < Minitest::Test
     [
       [[[[1, 2, 3]]]],
       { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => { 'foo' => 1 } } } } } } } } },
-      { 'foo' => [1, 2, true], 'bar' => ['baz'], 'baz' => { 'v1' => nil, 'v2' => [], 'v3' => 'corge' } }
+      { 'foo' => [1, 2, true], 'bar' => ['baz'], 'baz' => { 'v1' => nil, 'v2' => [], 'v3' => 'corge' } },
+      [{ 'foo bar' => 1, 'baz' => ['a string with a lot of spaces in it'] }]
     ].each do |val|
       json = JSON.unparse(val)
       parse = clock(json) { Gson.first json }

@@ -242,15 +242,4 @@ class ErrorTest < Minitest::Test
     end
     assert_match(/unexpected value/, e.message)
   end
-
-  class SkinnyRule
-    extend Gullah
-  end
-
-  def test_skinny_rule
-    e = assert_raises Gullah::Error, 'every rule must consume something' do
-      SkinnyRule.rule :foo, 'bar? baz?'
-    end
-    assert_match(/can consume no nodes/, e.message)
-  end
 end

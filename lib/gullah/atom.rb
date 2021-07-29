@@ -94,11 +94,6 @@ module Gullah
       end
     end
 
-    # so we can ensure every atom starting a sequences will consume at least one node
-    def min_consumption
-      @min_consumption ||= min_repeats + self.next&.min_consumption.to_i
-    end
-
     ## ADVISORILY PRIVATE
 
     def _next=(nxt)

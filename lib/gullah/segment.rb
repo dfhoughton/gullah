@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module Gullah
-  # to be regarded as a non-public class
   # a segment handles the portion of a string between boundaries
   # or a boundary itself
   class Segment # :nodoc:
@@ -9,6 +8,9 @@ module Gullah
     attr_accessor :continuations
 
     def initialize(lexes, filters, starters, do_unary_branch_check, n)
+      # the lexes are all parses that begin and end at the same character offsets
+      # the one with the fewest root nodes is most likely to be correct
+      lexes = lexes.sort_by(&:length)
       sample = lexes.first
       @start = sample.start
       @end = sample.end
