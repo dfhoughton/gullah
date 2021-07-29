@@ -21,17 +21,17 @@ class JsonTest < Minitest::Test
     rule :last_pair, 'key ":" json following_brace', process: :inherit_json_value
     rule :key_value_pair, 'key ":" json ","', process: :inherit_json_value
     rule :array, '"[" array_item* json? "]"', process: :arrayify
-    rule :json, 'complex | simple', process: :inherit_value
-    rule :complex, 'array | object', process: :inherit_value
-    rule :array_item, 'json ","', process: :inherit_value
+    rule :json, 'complex | simple',           process: :inherit_value
+    rule :complex, 'array | object',          process: :inherit_value
+    rule :array_item, 'json ","',             process: :inherit_value
     rule :simple, 'string | null | integer | si | float | boolean', process: :inherit_value
 
     leaf :boolean, /\b(true|false)\b/, process: ->(n) { n.atts[:value] = n.text == 'true' }
     leaf :string, /'(?:[^'\\]|\\.)*'(?!\s*:)/, process: :clean_string
     leaf :string, /"(?:[^"\\]|\\.)*"(?!\s*:)/, process: :clean_string
-    leaf :null, /\bnull\b/, process: ->(n) { n.atts[:value] = nil }
-    leaf :si, /\b\d\.\d+e[1-9]\d*\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
-    leaf :float, /\b\d+\.\d+\b/, process: ->(n) { n.atts[:value] = n.text.to_f }
+    leaf :null, /\bnull\b/,                process: ->(n) { n.atts[:value] = nil }
+    leaf :si, /\b\d\.\d+e[1-9]\d*\b/,      process: ->(n) { n.atts[:value] = n.text.to_f }
+    leaf :float, /\b\d+\.\d+\b/,           process: ->(n) { n.atts[:value] = n.text.to_f }
     leaf :integer, /\b[1-9]\d*\b(?!\.\d)/, process: ->(n) { n.atts[:value] = n.text.to_i }
 
     # terrible, horrible, no good, very bad hacks to reduce backtracking
