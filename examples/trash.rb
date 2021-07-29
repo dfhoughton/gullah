@@ -37,4 +37,4 @@ PROFUNDITY
 
 poetry = Sanitation.first text
 puts poetry.summary
-Gullah::Dotifier.dot poetry, "poem", make_it: :so
+Gullah::Dotifier.dot poetry, 'poem', make_it: :so
