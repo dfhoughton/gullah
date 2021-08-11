@@ -20,8 +20,9 @@ module Gullah
       @hopper = Hopper.new(filters, n)
       @starters = starters
       @do_unary_branch_check = do_unary_branch_check
-      @bases = lexes.map do |p|
-        Iterator.new(p, @hopper, starters, do_unary_branch_check)
+      @bases = Picker.new
+      lexes.each do |p|
+        @bases << Iterator.new(p, @hopper, starters, do_unary_branch_check)
       end
     end
 

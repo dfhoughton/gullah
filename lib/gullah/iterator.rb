@@ -34,6 +34,16 @@ module Gullah
       end
     end
 
+    # number of nodes that need reduction
+    def length
+      @parse.length
+    end
+
+    # number of erroneous nodes in the parse
+    def errors
+      @parse.correctness_count
+    end
+
     def never_returned_any?
       !@returned_any
     end

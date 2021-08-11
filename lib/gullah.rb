@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'set'
-%w[version atom error hopper leaf node trash boundary parse rule iterator dotifier segment].each do |s|
+%w[version atom error hopper leaf node trash boundary parse rule iterator dotifier segment picker].each do |s|
   require "gullah/#{s}"
 end
 

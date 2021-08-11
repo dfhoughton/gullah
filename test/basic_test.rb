@@ -394,7 +394,8 @@ class BasicTest < Minitest::Test
     assert parses.length > 1, 'removing the filters gives us many parses'
     assert parses.any?(&:success?), 'there is at least one correct parse'
     assert parses.any?(&:failure?), 'there is at least one failure'
-    n = parses.first(&:failure?).roots.find(&:failed?)
+    assert parses.any?(&:errors?), 'there is at least one erroneous parse'
+    n = parses.find(&:errors?).roots.find(&:error?)
     assert !n.nil?, 'found a node that failed its test'
     assert n.attributes[:failures].any? { |ar| [[:prime], [:nonprime]].include? ar }, 'nature of failure is marked'
   end
