@@ -148,6 +148,18 @@ module Gullah
     end
 
     ##
+    # The text preceding this node's text. Useful for lookaround tests and preconditions.
+    def text_before
+      @text[0...start]
+    end
+
+    ##
+    # The text following this node's text. Useful for lookaround tests and preconditions.
+    def text_after
+      @text[self.end..-1]
+    end
+
+    ##
     # The node's start text offset. For a non-terminal node, this will be
     # the same as the start of the first leaf node of its subtree.
     def start

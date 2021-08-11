@@ -128,7 +128,7 @@ end
 #
 #     def colon_after(_name, children)
 #       c = children.last
-#       c.full_text[c.end..-1] =~ /\A\s*:/ # equivalent to (?=\s*:)
+#       c.text_after =~ /\A\s*:/ # equivalent to (?=\s*:)
 #     end
 #
 # = Tests
