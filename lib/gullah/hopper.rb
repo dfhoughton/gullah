@@ -97,7 +97,9 @@ module Gullah
 
     def vet(parse, i, offset, rule, do_unary_branch_check)
       preconditions_satisfied = rule.preconditions.all? do |pc|
-        pc.call rule.name, parse.roots[i...offset]
+        # at this point, any prospective node will be non-terminal
+        kids = parse.roots[i...offset]
+        pc.call rule.name, kids.first.start, kids.last.end, kids.first.text, kids
       end
       return unless preconditions_satisfied
 

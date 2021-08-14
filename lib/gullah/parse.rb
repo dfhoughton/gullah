@@ -167,12 +167,19 @@ module Gullah
     def split
       last_index = 0
       splits = []
+
+      # look for traversible sequences and boundaries
       roots.each_with_index do |n, i|
         next if n.traversible?
 
-        segment = Parse.new text
-        segment._roots = roots[last_index...i]
-        splits << segment.initialize_summaries
+        if i > last_index
+          # sometimes you can have two boundaries in a row,
+          # or you can begin with a boundary
+          segment = Parse.new text
+          segment._roots = roots[last_index...i]
+          splits << segment.initialize_summaries
+        end
+
         # create boundary element
         segment = Parse.new text
         segment._roots = [n]

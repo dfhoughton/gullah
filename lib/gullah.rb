@@ -99,7 +99,7 @@ end
 #
 #   rule :foo, 'bar+', preconditions: %i[fibonacci]
 #
-#   def fibonacci(_name, children)
+#   def fibonacci(_name, _start, _end, _text, children)
 #     is_fibonacci_number? children.length # assumes we've defined is_fibonacci_number?
 #   end
 #
@@ -113,7 +113,7 @@ end
 # Preconditions are like tests (see below). They are further conditions on the building of
 # nodes in a parse tree. Why does Gullah provide both? There are several reasons:
 #
-# - Preconditions are tested before the node is build, avoiding the overhead of cloning
+# - Preconditions are tested before the node is built, avoiding the overhead of cloning
 #   nodes, so they are considerably lighter-weight.
 # - Because they are tested *before* the node is built, they result in no partially erroneous
 #   parse in the event of failure, so they leave nothing Gullah will attempt to improve further
@@ -122,13 +122,12 @@ end
 # - And they concern only the subtree rooted at the prospective node, so they cannot express
 #   structural relationships between this node and nodes which do not descend from it.
 #
-#   *Note*, the cannot tests relationships between *nodes* outside the prospective node's
+#   *Note*, they cannot tests relationships between *nodes* outside the prospective node's
 #   subtree, but they can test its relationships to adjoining *characters*, so they can
 #   implement lookarounds. For instance:
 #
-#     def colon_after(_name, children)
-#       c = children.last
-#       c.text_after =~ /\A\s*:/ # equivalent to (?=\s*:)
+#     def colon_after(_rule_or_leaf_name, _start_offset, end_offset, text, _children)
+#       text[end_offset..-1] =~ /\A\s*:/ # equivalent to (?=\s*:)
 #     end
 #
 # = Tests
@@ -522,6 +521,7 @@ module Gullah
     return if @committed
     raise Error, "#{name} has no leaves" unless @leaves&.any?
 
+    # add the whitespace rule unless told otherwise
     if @keep_whitespace
       remove_instance_variable :@keep_whitespace
     else
@@ -625,8 +625,10 @@ module Gullah
         # can this leaf rule extract a leaf at this offset?
         next unless (md = leaf.rx.match(text, offset)) && md.begin(0) == offset
 
-        added_any = true
         e = md.end(0)
+        next if leaf.preconditions.any? { |pc| pc.call(leaf.name, offset, e, text, []) == :fail }
+
+        added_any = true
         new_parse = parse.add(offset, e, leaf, @do_unary_branch_check, false, leaf.boundary)
         if e == text.length
           done << new_parse
@@ -639,9 +641,15 @@ module Gullah
       # try to eliminate trash
       trash_offset = text.length
       @leaves.each do |leaf|
-        if (md = leaf.rx.match(text, offset)) && (md.begin(0) < trash_offset)
-          trash_offset = md.begin(0)
-        end
+        # is there a leaf like this closer to the current offset?
+        next unless
+          (md = leaf.rx.match(text, offset)) &&
+          (b = md.begin(0)) &&
+          (b < trash_offset) &&
+          (e = md.end(0)) &&
+          leaf.preconditions.none? { |pc| pc.call(leaf.name, b, e, text, []) == :fail }
+
+        trash_offset = b
       end
       new_parse = parse.add(offset, trash_offset, trash_rule, false, true)
       if trash_offset == text.length
@@ -650,7 +658,7 @@ module Gullah
         bases << [trash_offset, new_parse]
       end
     end
-    done # any array of Parses
+    done # an array of Parses
   end
 
   # slice text into independent segments
@@ -714,7 +722,14 @@ module Gullah
       rescue ::NameError
         raise Error, "#{precond} is not defined"
       end
-      raise Error, "#{precond} must take two arguments" unless m.arity == 2
+      raise Error, <<-MESSAGE.strip.gsub(/\s+/, ' ') unless m.arity == 5
+        #{precond} must take four arguments:
+          the rule or leaf name,
+          the start character offset,
+          the end character offset,
+          the text being parsed,
+          and the prospective children
+      MESSAGE
 
       m
     end

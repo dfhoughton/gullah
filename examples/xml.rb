@@ -19,7 +19,7 @@ class XMLish
   leaf :squote, /'[^']*'/
   leaf :dquote, /"[^"]*"/
 
-  def same_tag(_name, children)
+  def same_tag(_name, _s, _e, _text, children)
     first, last = children.select { |c| c.name == :tag }
     first.text == last.text
   end
