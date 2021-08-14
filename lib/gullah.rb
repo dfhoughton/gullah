@@ -247,7 +247,7 @@ end
 # of Raku, various regular expression optimization libraries in various languages, a simple
 # grammar-esque regular expression enhancer for Rust that produces abstract syntax trees but
 # can't handle recursion -- so I was thinking about the topic. A problem I faced with the recursive
-# descent parser, which I later learned was a well-known problem, is that of infinite left-recursion.
+# descent parser, which I later learned was a well-known problem, was infinite left-recursion.
 # If you have a rule such as <tt>X -> X Y | Z</tt>, where an +X+ can be made of other +X+ es, your recursive
 # descent parser constructs an infinitely long plan that never touches the data -- "I'll try an X, which
 # means I'll first try an X, which means I'll first try an X..." The solution to this is to create an
@@ -266,14 +266,14 @@ end
 #
 # (One thing I should say up front is that the design of Gullah is based entirely on my own pondering. I am not
 # a very enthusiastic reader of other people's research. I am aware that a lot of work has been done on
-# parsing and parser design, but the fun for me is in coming up with the ideas more than doing the background
+# parsing and parser design, but the fun for me is in coming up with the ideas more than in doing the background
 # reading, so I have just dived in. I am sure I have reinvented some wheels in this, mostly likely badly.)
 #
 # (Another aside: The left-recursion problem disappears with a bottom-up parser, which must consume data to proceed, but it
 # is replaced with a unary-branching problem. If you have a rule that says an +A+ can be relabeled +B+ -- that
 # is, you can add a node with a single child -- you risk an infinite loop. You may define rules such that +A+ becomes
 # +B+, and another rule, or series of rules, which turns this +B+ back into an +A+. So this bottom-up parser has
-# a somewhat unsatisfactory loop check as well, but only when it determines that some set of rules allow this pattern.)
+# a somewhat unsatisfactory loop check as well.)
 #
 # A side benefit of bottom-up parsing is that it is robust against ill-formed data. If you can't make what you
 # set out to make at least you can make something. And the structure you build out of the data can show very
