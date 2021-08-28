@@ -30,16 +30,35 @@ A simple, fault-tolerant bottom-up parser written in Ruby.
   end
 
   def test_cat
-    parses = Cat.parse 'The cat sat on the mat.'
+    parses = Cat.parse 'The fat cat sat on the mat.'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
     assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
     root = parse.nodes.first
     assert_equal :S, root.name, 'the root node is a sentence'
-    vp = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
-    assert_equal 'sat', vp&.text, 'we have the expected verb'
+    verb = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
+    assert_equal 'sat', verb&.text, 'we have the expected verb'
   end
 ```
+
+# What is this?
+
+A parser takes a string representing some structured data -- a sentence in a natural language, say, or a data structure, or a program in some programming language -- and a set of rules defining the possible structures in this data and it returns an object representing the structured data.
+
+A top-down parser requires some root rule that all data structures obeying these rules will obey. A bottom-up parser says for a given piece of data what rules it may participate in. A top-down parser in effect compiles into a state machine similar to a regular expression that represents all ways a string may obey its rules. It in effect constructs a parsing plan and tries to match this plan to the string. A bottom-up parser begins planning when it sees the data. It looks at the first thing it is given to match and creates a plan for matching it and whatever may follow.
+
+The important difference is that a top-down parser must have a single root element. A bottom-up parser takes what is given and reduces it to a set of root symbols. It need not have a common symbol that must be at the root of all parses.
+
+# Why?
+
+I made Gullah because it seemed like a fun project. I have written several parsing-related things
+for several languages. I have written a [top-down parser](https://github.com/dfhoughton/Grammar) and a [non-recursive top-down parser](https://github.com/dfhoughton/pidgin). I thought I'd try a bottom-up parser. I have no particular use for it, but I often find I want to parse things, so maybe a use will show up.
+
+# Should I use this?
+
+Well, it's pretty easy to use, but if you have a bespoke parser for a particular unambiguous language, that will almost certainly be much faster. An XML parser can parse XML in linear time. Because Gullah is looking for errors and ambiguity it will consider lots of alternative deadend permutations that a SAX parser, say, will skip. Don't write a new JSON parser in Gullah, in other words. But if you want to play with natural language, or you have some toy language or small spec you're working with, Gullah can get you going quickly. Maybe it will suffice for all your needs!
+
+Gullah will give you its best parses of your string even if it is ungrammatical. Also, Gullah makes it easy to add arbitrary conditions on rules that another parser might not. For instance, in Gullah you can specify arbitrary-width lookarounds for a rule -- `foo` must be preceded/followed by `bar` and some number of whitespaces -- and you can define other long-distance dependences -- "runs" must have a singular subject, "viejas" must be modifying a feminine plural noun. For more on this see the documentation of node tests, ancestor tests, and preconditions in the `Gullah` module.
 
 # Name
 
@@ -57,8 +76,12 @@ Central and West African languages. I thought the name "Gullah" was cool and I l
 
 I hope this causes no offense to speakers of Gullah.
 
-# Further
+# Future
 
-This is very much a work in progress. For one thing, I haven't finished writing this README and the test suite is
-still impoverished. I am not currently aware of any bugs, though, and I should have things patched up shortly.
+Because Gullah is designed to handle ambiguous grammars and erroneous data, it can produce many parses for a given string. Right now you can ask for all parses (maybe very slow), or at least `n` equally good parses. This makes the API a little complicated and noisy. I have begun work rewriting it to return a lazy enumeration of parses. Ruby's `Enumerable` magic is nice. I haven't finished this, though, and I might not, but it may be that some future version of this will change the API dramatically.
 
+Another possibility, if I have sufficient spare time and am sufficiently ambitious, is that I may refactor the algorithm to use ractors. Certain parts of the algorithm are a natural fit for parallelization. We shall see.
+
+# Acknowledgements
+
+I would like to thank my family and co-workers for tolerating me saying "Gullah" much more often than any of them expected.

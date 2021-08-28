@@ -31,19 +31,23 @@ end
 #
 # = Syntax
 #
-# This second describes only the syntax of Gullah rules, not the entire API. Gullah
+# This section describes only the syntax of Gullah rules, not the entire API. Gullah
 # syntax is generally the more familiar subset of the rules of regular expressions.
 #
-# - sequence
+# - <b>sequence</b>
 #
 #     rule :foo, 'bar baz' # one thing follows another
 #
-# - alternation
+# - <b>alternation</b>
 #
 #     rule :foo, 'bar | baz' # separate alternates with pipes
 #     rule :foo, 'plugh+'    # or simply define it additional times (not regex grammar)
 #
-# - repetition
+#   Note, you can define all alternates by simple redefinition as in the second line
+#   above. You can use the pipe syntax for convenience. Any tests or preconditions
+#   provided with a particular definition of the rule <em>will apply only for that definition</em>.
+#
+# - <b>repetition</b>
 #
 #     rule :option,  'foo?'     # ?     means "one or none"
 #     rule :plural,  'foo+'     # +     means "one or more"
@@ -54,11 +58,11 @@ end
 #
 #   Note, though you can define rules like +option+ and +options+, a rule can't add
 #   a node to the parse tree if it matches nothing. These repetition suffixes are
-#   are more useful as part of a sequence. In practice <tt>foo?<tt> will be a less
+#   are more useful as part of a sequence. In practice <tt>foo?</tt> will be a less
 #   efficient version of <tt>foo</tt>, and <tt>foo*</tt>, a less efficient version of
 #   <tt>foo+</tt>.
 #
-# - literals
+# - <b>literals</b>
 #
 #     rule :foo,  '"(" bar ")"'
 #
@@ -73,7 +77,7 @@ end
 #   escape sequences to include random characters in literals. Literals may have
 #   repetition suffixes.
 #
-# - grouping
+# - <b>grouping</b>
 #
 #     rule :foo, 'bar baz'
 #
@@ -93,7 +97,7 @@ end
 #   rule :foo, 'bar+'
 #
 # you've collected a sequence of +bar+ nodes. If there is some condition you need this
-# node to respect *which is dependent only on the rule and the child nodes* which you
+# node to respect <em>which is dependent only on the rule and the child nodes</em> which you
 # can't express, or not easily, in the rule itself, you can define one or more
 # preconditions. E.g.,
 #
@@ -104,9 +108,10 @@ end
 #   end
 #
 # A precondition is just an instance method defined in the Gullah-fied class with an arity
-# of two: it takes the rule's name, a symbol, as its first argument, and the prospective
-# child nodes, an array, as its second. If it returns a truthy value, the precondition holds
-# and the node can be made. Otherwise, Gullah tries the next thing.
+# of two: it takes the rule's name, a symbol, as its first argument, the start and end character
+# offsets of the match as its second and third arguments, the text being parsed as its fourth argument,
+# and the prospective child nodes, an array, as its last argument. If it returns a truthy value, the
+# precondition holds and the node can be made. Otherwise, Gullah tries the next thing.
 #
 # == Preconditions versus Tests
 #
@@ -114,16 +119,16 @@ end
 # nodes in a parse tree. Why does Gullah provide both? There are several reasons:
 #
 # - Preconditions are tested before the node is built, avoiding the overhead of cloning
-#   nodes, so they are considerably lighter-weight.
-# - Because they are tested *before* the node is built, they result in no partially erroneous
+#   nodes, so they are considerably lighter weight.
+# - Because they are tested <em>before</em> the node is built, they result in no partially erroneous
 #   parse in the event of failure, so they leave nothing Gullah will attempt to improve further
 #   at the cost of time.
 # - But they don't leave a trace, so there's nothing to examine in the event of failure.
 # - And they concern only the subtree rooted at the prospective node, so they cannot express
 #   structural relationships between this node and nodes which do not descend from it.
 #
-#   *Note*, they cannot tests relationships between *nodes* outside the prospective node's
-#   subtree, but they can test its relationships to adjoining *characters*, so they can
+#   <b>Note</b>: preconditions cannot tests relationships between <em>nodes</em> outside the prospective node's
+#   subtree, but they can test its relationships to adjoining <em>characters</em>, so they can
 #   implement lookarounds. For instance:
 #
 #     def colon_after(_rule_or_leaf_name, _start_offset, end_offset, text, _children)
@@ -195,23 +200,16 @@ end
 #     end
 #   end
 #
-# The test may simply return +:fail+, or it may return a array beginning with +:fail+ and
-# continuing with whatever else one wishes to stash in the +attribute+ hash of the node in
-# the AST.
-#
 # If a node returns +:pass+, the fact that the node passed the rule in question will be added to
 # its +attributes+ hash in the AST.
 #
 # If a rule returns +:ignore+, this will constitute a pass, but no edits will be made to the AST.
 #
-# Only structure rules may return +nil+. This indicates that the preconditions for the test are not
-# present, in which case the test will be deferred until the node acquires a new ancestor.
-#
 # Tests short-circuit! If a node has many tests, they run until one fails.
 #
 # == Disadvantages of Tests
 #
-# All this being said, when tests *fail* they do so after their node has been built and added
+# All this being said, when tests <em>fail</em> they do so after their node has been built and added
 # to a parse. This means their partially broken parse remains a candidate as Gullah tries to
 # find the least bad way to parse the text it was given. This can be computationally expensive.
 # If you can make do with preconditions (see above), they are the better choice.
@@ -378,7 +376,7 @@ module Gullah
   # rules will refer to. The regular expression of course defines the character sequence
   # the rule matches. The more precise the regular expression the fewer false possibilities
   # Gullah will have to sort through to find the best parse(s). Boundary markers in
-  # particular, +\b+ or lookarounds such as +(?<!\d)+, are helpful in this regard.
+  # particular, +\b+ or lookarounds such as <tt>(?<!\d)</tt>, are helpful in this regard.
   #
   # The optional arguments are +tests+ and +process+. See +rule+ for more regarding these.
   #

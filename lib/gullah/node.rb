@@ -118,13 +118,13 @@ module Gullah
     end
 
     ##
-    # Was this node created by an ignore rule?
+    # Was this node created by an +ignore+ rule?
     def ignorable?
       @leaf && rule.ignorable
     end
 
     ##
-    # Was this node created something other than an ignore rule?
+    # Was this node created by something other than an +ignore+ rule?
     def significant?
       !ignorable?
     end
@@ -317,7 +317,7 @@ module Gullah
     end
 
     ##
-    # The leaves of this node's subtree. If the node is a leaf, the returns a
+    # The leaves of this node's subtree. If the node is a leaf, this returns a
     # single-member array containing the node itself.
     def leaves
       @leaf ? [self] : descendants.select(&:leaf?)
@@ -325,14 +325,14 @@ module Gullah
 
     ##
     # The collection of nodes in the subtree containing this node that do not +contain+
-    # the node and start offset precedes its start offset.
+    # the node and whose start offset precedes its start offset.
     def prior
       root.descendants.reject { |n| n.contains? start }.select { |n| n.start < start }
     end
 
     ##
-    # The collection of nodes in the subtree containing this node that do not +contain+
-    # the node and whose start offset is at or after its end offset.
+    # The collection of nodes in the subtree containing this node whose start offset
+    # is at or after its end offset.
     def later
       root.descendants.select { |n| n.start >= self.end }
     end

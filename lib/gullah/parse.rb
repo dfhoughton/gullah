@@ -34,7 +34,7 @@ module Gullah
 
     # A concise stringification of the syntactic structure of this parse.
     # For a given string and grammar all the parses will have a unique
-    # stringification.
+    # summary.
     attr_reader :summary
 
     def initialize(text) # :nodoc:
@@ -77,10 +77,11 @@ module Gullah
     end
 
     ##
-    # The count of nodes that failed some test. Structure tests mark both the
-    # child as erroneous and the ancestor node where the test was run.
-    def correctness_count
-      @correctness_count ||= roots.select(&:failed?).count
+    # The count of nodes that failed some test. Structure tests mark both the child
+    # and the ancestor node where the test was run as erroneous,
+    # so they will increase the +incorrectness_count+ by 2.
+    def incorrectness_count
+      @incorrectness_count ||= roots.select(&:failed?).count
     end
 
     ##
@@ -95,7 +96,7 @@ module Gullah
     # some test failed or because they correspond to "trash" -- characters
     # that matched no leaf rule?
     def errors?
-      correctness_count.positive?
+      incorrectness_count.positive?
     end
 
     ##
@@ -128,7 +129,7 @@ module Gullah
 
     def clone # :nodoc:
       super.tap do |c|
-        %i[@summary @size @correctness_count @pending_count].each do |v|
+        %i[@summary @size @incorrectness_count @pending_count].each do |v|
           c.remove_instance_variable v if c.instance_variable_defined?(v)
         end
       end

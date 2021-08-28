@@ -41,7 +41,7 @@ module Gullah
 
     # number of erroneous nodes in the parse
     def errors
-      @parse.correctness_count
+      @parse.incorrectness_count
     end
 
     def never_returned_any?

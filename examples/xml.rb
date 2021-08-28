@@ -2,6 +2,8 @@
 
 require 'gullah'
 
+# :stopdoc:
+
 class XMLish
   extend Gullah
 

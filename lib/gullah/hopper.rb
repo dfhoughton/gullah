@@ -56,7 +56,7 @@ module Gullah
                 when :completion
                   parse.length
                 when :correctness
-                  parse.correctness_count
+                  parse.incorrectness_count
                 when :size
                   parse.size
                 when :pending
@@ -85,7 +85,7 @@ module Gullah
 
         value = case f
                 when :correctness
-                  parse.correctness_count
+                  parse.incorrectness_count
                 when :size
                   parse.size
                 end
@@ -128,7 +128,7 @@ module Gullah
                 when :completion
                   parse.length
                 when :correctness
-                  parse.correctness_count
+                  parse.incorrectness_count
                 when :size
                   parse.size
                 when :pending
