@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.homepage    =
     'https://rubygems.org/gems/gullah'
   s.license = 'MIT'
-  s.required_ruby_version = '>= 2.3'
+  s.required_ruby_version = '>= 2.6'
   s.files                 = `git ls-files -z`.split("\x0")
   s.test_files            = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths         = ['lib']

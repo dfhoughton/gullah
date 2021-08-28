@@ -505,7 +505,7 @@ module Gullah
   private
 
   def init
-    return if @rules
+    return if iv_check :@rules
 
     @rules = []
     @leaves = []
@@ -516,13 +516,18 @@ module Gullah
     @do_unary_branch_check = nil
   end
 
+  def iv_check(var)
+    v = instance_variable_defined?(var) && instance_variable_get(var)
+    v && block_given? ? yield(v) : v
+  end
+
   # do some sanity checking, initialization, and optimization
   def commit
-    return if @committed
-    raise Error, "#{name} has no leaves" unless @leaves&.any?
+    return if iv_check(:@committed)
+    raise Error, "#{name} has no leaves" unless iv_check(:@leaves, &:any?)
 
     # add the whitespace rule unless told otherwise
-    if @keep_whitespace
+    if iv_check(:@keep_whitespace)
       remove_instance_variable :@keep_whitespace
     else
       used_rules = (@rules.map(&:name) + @leaves.map(&:name)).to_set
@@ -544,8 +549,8 @@ module Gullah
     # better would be sorting by frequency in parse trees, but we don't have
     # that information
     @starters.transform_values { |atoms| atoms.sort_by(&:max_consumption).reverse }
-    remove_instance_variable :@leaf_dup_check if @leaf_dup_check
-    remove_instance_variable :@rule_dup_check if @rule_dup_check
+    remove_instance_variable :@leaf_dup_check if iv_check(:@leaf_dup_check)
+    remove_instance_variable :@rule_dup_check if iv_check(:@rule_dup_check)
     @committed = true
   end
 

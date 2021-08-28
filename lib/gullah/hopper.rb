@@ -25,7 +25,7 @@ module Gullah
     def satisfied?
       if @bin.length == @number_sought
         limits = @thresholds.values_at(:correctness, :pending).compact
-        if limits.any? && limits.all? { |n| n.zero? }
+        if limits.any? && limits.all?(&:zero?)
           # we could have accumulated some dross
           @bin.uniq!(&:summary)
           @bin.length == @number_sought
@@ -106,15 +106,15 @@ module Gullah
       candidate = "#{rule.name}[#{parse.roots[i...offset].map(&:summary).join(',')}]"
       unvetted_summary = [
         parse.roots[0...i].map(&:summary) +
-        [candidate] +
-        parse.roots[offset..].map(&:summary)
+          [candidate] +
+          parse.roots[offset..].map(&:summary)
       ].join(';')
       unless @seen.include? unvetted_summary
         @seen << unvetted_summary
         parse.add(i, offset, rule, do_unary_branch_check).tap do |new_parse|
           if new_parse
-            new_parse._summary= unvetted_summary
-            new_parse.roots[i]._summary= candidate
+            new_parse._summary = unvetted_summary
+            new_parse.roots[i]._summary = candidate
           end
         end
       end

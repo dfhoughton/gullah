@@ -12,7 +12,7 @@ module Gullah
     ##
     # A hash of attributes, including indicators of tests that passed or failed.
     # The +atts+ alias of +attributes+ exists for when a more telegraphic coding style is useful.
-    attr_reader :attributes # TODO collect the keys users shouldn't use and document them
+    attr_reader :attributes # TODO: collect the keys users shouldn't use and document them
 
     ##
     # The children of this node, if any, as an array.
@@ -24,13 +24,14 @@ module Gullah
 
     ##
     # An alternative method for when a more telegraphic coding style is useful.
-    alias_method :atts, :attributes
+    alias atts attributes
 
     def initialize(parse, s, e, rule) # :nodoc:
       @rule = rule
       @leaf = rule.is_a?(Leaf) || trash?
       @text = parse.text
       @attributes = {}
+      @failed_test = false
       if @leaf
         @start = s
         @end = e
@@ -156,7 +157,7 @@ module Gullah
     ##
     # The text following this node's text. Useful for lookaround tests and preconditions.
     def text_after
-      @text[self.end..-1]
+      @text[self.end..]
     end
 
     ##
@@ -268,15 +269,13 @@ module Gullah
     ##
     # Returns the children of this node's parent's children minus this node itself.
     def siblings
-      parent.children.reject { |n| n == self } if parent
+      parent&.children&.reject { |n| n == self }
     end
 
     ##
     # The index of this node among its parent's children.
     def sibling_index
-      if parent
-        @sibling_index ||= parent.children.index self
-      end
+      @sibling_index ||= parent.children.index self if parent
     end
 
     ##
@@ -288,7 +287,7 @@ module Gullah
     ##
     # Returns the children of this node's parent that follow it.
     def later_siblings
-      parent && siblings[(sibling_index+1)..]
+      parent && siblings[(sibling_index + 1)..]
     end
 
     ##
@@ -300,21 +299,21 @@ module Gullah
     ##
     # Is this node the first of its parent's children?
     def first_child?
-      sibling_index == 0
+      sibling_index.zero?
     end
 
     ##
     # The immediately prior sibling to this node.
     def prior_sibling
       if parent
-        first_child? ? nil : parent.children[sibling_index-1]
+        first_child? ? nil : parent.children[sibling_index - 1]
       end
     end
 
     ##
     # The immediately following sibling to this node.
     def later_sibling
-      parent && parent.children[sibling_index+1]
+      parent && parent.children[sibling_index + 1]
     end
 
     ##
@@ -486,9 +485,9 @@ module Gullah
         @skip = skip
       end
 
-      def each
+      def each(&block)
         yield @n unless @n == @skip
-        @n.parent&._ancestors(@skip)&.each { |o| yield o }
+        @n.parent&._ancestors(@skip)&.each(&block)
       end
 
       def last
@@ -503,11 +502,11 @@ module Gullah
         @skip = skip
       end
 
-      def each
+      def each(&block)
         yield @n unless @n == @skip
         unless @n.leaf?
           @n.children.each do |c|
-            c._descendants(@skip).each { |o| yield o }
+            c._descendants(@skip).each(&block)
           end
         end
       end

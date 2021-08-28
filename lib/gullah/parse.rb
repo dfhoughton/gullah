@@ -129,7 +129,7 @@ module Gullah
     def clone # :nodoc:
       super.tap do |c|
         %i[@summary @size @correctness_count @pending_count].each do |v|
-          c.remove_instance_variable v if c.instance_variable_get v
+          c.remove_instance_variable v if c.instance_variable_defined?(v)
         end
       end
     end
