@@ -2,6 +2,7 @@
 
 module Gullah
   # a rule used in string tokenization
+  # @private
   class Leaf # :nodoc:
     attr_reader :rx, :name, :ignorable, :boundary, :tests, :ancestor_tests, :preconditions
 

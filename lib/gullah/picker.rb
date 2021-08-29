@@ -3,6 +3,7 @@
 module Gullah
   # a Picker keeps a sorted set of iterators so we can always pick the iterator
   # most likely to lead quickly to a satisfactory parse
+  # @private
   class Picker # :nodoc:
     def initialize
       # a sorted list of the

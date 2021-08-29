@@ -582,6 +582,7 @@ module Gullah
     end
   end
 
+  # @private
   class LoopCheck
     def initialize(link)
       @seen = Set.new(link)

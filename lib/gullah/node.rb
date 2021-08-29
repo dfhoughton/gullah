@@ -478,6 +478,7 @@ module Gullah
       end
     end
 
+    # @private
     class Ancestors
       include Enumerable
       def initialize(n, skip)
@@ -495,6 +496,7 @@ module Gullah
       end
     end
 
+    # @private
     class Descendants
       include Enumerable
       def initialize(n, skip)

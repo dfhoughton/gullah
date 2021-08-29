@@ -2,6 +2,7 @@
 
 module Gullah
   # a node just for trash
+  # @private
   class Trash < Node # :nodoc:
     # does this node represent a character sequence no leaf rule matched?
     def trash?

@@ -3,6 +3,7 @@
 module Gullah
   # a Hopper keeps completed parses, deleting inferior ones as better parses are found
   # this facilitates efficient memory use and parsing
+  # @private
   class Hopper # :nodoc:
     def initialize(filters, number_sought)
       dross = filters - %i[completion correctness size pending]

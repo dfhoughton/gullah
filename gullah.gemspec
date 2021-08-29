@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.authors     = ['David F. Houghton']
   s.email       = 'dfhoughton@gmail.com'
   s.homepage    =
-    'https://rubygems.org/gems/gullah'
+    'https://github.com/dfhoughton/gullah'
   s.license = 'MIT'
   s.required_ruby_version = '>= 2.6'
   s.files                 = `git ls-files -z`.split("\x0")

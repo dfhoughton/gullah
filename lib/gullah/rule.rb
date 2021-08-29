@@ -2,6 +2,7 @@
 
 module Gullah
   # a non-terminal grammatical rule
+  # @private
   class Rule # :nodoc:
     # name -- a symbol identifying the rule
     # body -- preserved for debugging

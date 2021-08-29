@@ -2,6 +2,7 @@
 
 module Gullah
   # for iterating over reductions of a given parse
+  # @private
   class Iterator # :nodoc:
     attr_reader :parse
 

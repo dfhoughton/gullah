@@ -150,6 +150,7 @@ module Gullah
     ## ADVISORILY PRIVATE
 
     # :stopdoc:
+    # @!visibility private
 
     # for debugging
     def own_text
@@ -212,6 +213,7 @@ module Gullah
       @summary = str
     end
 
+    # @private
     class NodeIterator # :nodoc:
       include Enumerable
 

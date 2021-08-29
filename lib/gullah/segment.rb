@@ -3,6 +3,7 @@
 module Gullah
   # a segment handles the portion of a string between boundaries
   # or a boundary itself
+  # @private
   class Segment # :nodoc:
     attr_reader :start, :end, :done
     attr_accessor :continuations
