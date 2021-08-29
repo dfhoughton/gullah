@@ -7,6 +7,7 @@ module Gullah
     # The parent node of this node, if any.
     attr_reader :parent
 
+    # @private
     attr_reader :rule # :nodoc:
 
     ##
@@ -26,6 +27,7 @@ module Gullah
     # An alternative method for when a more telegraphic coding style is useful.
     alias atts attributes
 
+    # @private
     def initialize(parse, s, e, rule) # :nodoc:
       @rule = rule
       @leaf = rule.is_a?(Leaf) || trash?
@@ -100,6 +102,7 @@ module Gullah
     end
 
     # is this node some sort of boundary to further matching
+    # @private
     def traversible? # :nodoc:
       !(boundary? || trash? || error?)
     end
@@ -337,6 +340,7 @@ module Gullah
       root.descendants.select { |n| n.start >= self.end }
     end
 
+    # @private
     def clone # :nodoc:
       super.tap do |c|
         c._attributes = deep_clone(attributes)
@@ -416,13 +420,16 @@ module Gullah
     ## ADVISORILY PRIVATE
 
     # :stopdoc:
+    # @!visibility private
 
+    # @private
     def _summary=(str) # :nodoc:
       @summary = str
     end
 
     # used during parsing
     # make sure we don't have any repeated symbols in a unary branch
+    # @private
     def _loop_check?(seen = nil) # :nodoc:
       return true if seen == name
 
@@ -437,26 +444,32 @@ module Gullah
       @leaf ? false : children.first._loop_check?(seen)
     end
 
+    # @private
     def _attributes=(attributes) # :nodoc:
       @attributes = attributes
     end
 
+    # @private
     def _parent=(other) # :nodoc:
       @parent = other
     end
 
+    # @private
     def _children=(children) # :nodoc:
       @children = children
     end
 
+    # @private
     def _descendants(skip) # :nodoc:
       Descendants.new(self, skip)
     end
 
+    # @private
     def _ancestors(skip) # :nodoc:
       Ancestors.new(self, skip)
     end
 
+    # @private
     def _failed_test=(bool) # :nodoc:
       @failed_test = bool
     end

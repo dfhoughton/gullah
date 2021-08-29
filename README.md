@@ -20,11 +20,11 @@ A simple, fault-tolerant bottom-up parser written in Ruby.
     rule :N, 'nouns'
     rule :A, 'adjectives'
 
-    leaf :determiners, /\b(the|a)\b/i
+    leaf :determiners, /\b(the|an?)\b/i
     leaf :nouns, /\b(cat|mat)\b/i
     leaf :prepositions, /\b(on|in|around|above|beside)\b/i
     leaf :verbs, /\b(sat|slept|moped)\b/
-    leaf :adjectives, /\b(big|small|hairy|bald)\b/i
+    leaf :adjectives, /\b(big|small|hairy|bald|fat)\b/i
 
     ignore :whatever, /[^\w\s]+/
   end
@@ -33,8 +33,8 @@ A simple, fault-tolerant bottom-up parser written in Ruby.
     parses = Cat.parse 'The fat cat sat on the mat.'
     assert_equal 1, parses.length, 'there is only one parse of this sentence'
     parse = parses.first
-    assert_equal 1, parse.nodes.reject(&:ignorable?).count, 'there is a root node for this parse'
-    root = parse.nodes.first
+    assert_equal 1, parse.roots.reject(&:ignorable?).length, 'there is a root node for this parse'
+    root = parse.roots.reject(&:ignorable?).first
     assert_equal :S, root.name, 'the root node is a sentence'
     verb = root.descendants.find { |d| d.name == :VP }&.descendants&.find { |d| d.name == :V }
     assert_equal 'sat', verb&.text, 'we have the expected verb'
