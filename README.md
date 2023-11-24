@@ -85,3 +85,7 @@ Another possibility, if I have sufficient spare time and am sufficiently ambitio
 # Acknowledgements
 
 I would like to thank my family and co-workers for tolerating me saying "Gullah" much more often than any of them expected.
+
+# Dedication
+
+I dedicate this gem to my son Jude, a.k.a [TurkeyMcMac](https://github.com/TurkeyMcMac). He was a better programmer than I will ever be and was only getting better. More importantly, he was a kind, funny, thoughtful person. I miss him every day. I love you, Jude.

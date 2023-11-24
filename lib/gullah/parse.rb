@@ -81,14 +81,14 @@ module Gullah
     # and the ancestor node where the test was run as erroneous,
     # so they will increase the +incorrectness_count+ by 2.
     def incorrectness_count
-      @incorrectness_count ||= roots.select(&:failed?).count
+      @incorrectness_count ||= roots.count(&:failed?)
     end
 
     ##
     # The count of nodes which have some structure test which was never
     # successfully run.
     def pending_count
-      @pending_count ||= roots.select(&:pending_tests?).count
+      @pending_count ||= roots.count(&:pending_tests?)
     end
 
     ##
@@ -122,7 +122,7 @@ module Gullah
     #
     #   parses = Grammar.parse "this grammar uses the usual whitespace rule"
     #
-    #   parses.first.nodes.select { |n| n.name == :_ws }.count  # => 6
+    #   parses.first.nodes.count { |n| n.name == :_ws }  # => 6
     def nodes
       NodeIterator.new self
     end

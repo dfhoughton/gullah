@@ -43,7 +43,7 @@ class BasicTest < Minitest::Test
     parses.each do |p|
       assert_equal 1, p.roots.length, 'parse has a root node'
       root = p.roots.first
-      assert_equal 2, root.subtree.select(&:nonterminal?).count, 'parse has 2 nonterminal nodes'
+      assert_equal 2, root.subtree.count(&:nonterminal?), 'parse has 2 nonterminal nodes'
       assert root.subtree.select(&:nonterminal?).each do |_n|
         assert_equal 2, b.children.length, 'nonterminal nodes each have 2 children'
       end
@@ -96,10 +96,10 @@ class BasicTest < Minitest::Test
     parse = parses.first
     assert_equal 8, parse.roots.length, 'there are 8 nodes in the parse'
     assert parse.roots.all?(&:leaf?), 'all nodes are leaf nodes'
-    assert_equal 3, parse.roots.select { |n| n.name == :ws }.count, 'there are 3 whitespace nodes'
-    assert_equal 3, parse.roots.select(&:ignorable?).count, 'there are 3 ignorable nodes'
-    assert_equal 4, parse.roots.select { |n| n.name == :word }.count, 'there are 4 word nodes'
-    assert_equal 1, parse.roots.select(&:trash?).count, 'there is 1 trash node'
+    assert_equal 3, parse.roots.count { |n| n.name == :ws }, 'there are 3 whitespace nodes'
+    assert_equal 3, parse.roots.count(&:ignorable?), 'there are 3 ignorable nodes'
+    assert_equal 4, parse.roots.count { |n| n.name == :word }, 'there are 4 word nodes'
+    assert_equal 1, parse.roots.count(&:trash?), 'there is 1 trash node'
     last_node = parse.roots.last
     assert last_node.trash?, 'the last node is the trash node'
   end
@@ -156,9 +156,9 @@ class BasicTest < Minitest::Test
     assert_equal 1, parse.roots.reject(&:ignorable?).count, 'there is a root node for this parse'
     root = parse.roots.first
     assert_equal :s, root.name, 'found expected root'
-    assert_equal 2, root.subtree.select { |n| n.name == :thing }.count, 'two things'
-    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
-    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+    assert_equal 2, root.subtree.count { |n| n.name == :thing }, 'two things'
+    assert_equal 1, root.subtree.count { |n| n.name == :word }, 'one word'
+    assert_equal 1, root.subtree.count { |n| n.name == :integer }, 'one integer'
   end
 
   class SubRulesWithTest
@@ -185,8 +185,8 @@ class BasicTest < Minitest::Test
     things = root.subtree.select { |n| n.name == :thing }
     assert_equal 2, things.count, 'two things'
     assert things.all? { |n| n.attributes[:satisfied].include?(%i[foo etc]) }, 'passing tests stuff in extra bits'
-    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
-    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+    assert_equal 1, root.subtree.count { |n| n.name == :word }, 'one word'
+    assert_equal 1, root.subtree.count { |n| n.name == :integer }, 'one integer'
   end
 
   class SubRulesWithAncestorTest
@@ -218,8 +218,8 @@ class BasicTest < Minitest::Test
       assert thing.attributes[:satisfied_descendant].include?([:foo, root.position]),
              'descendant is marked when ancestor test passes'
     end
-    assert_equal 1, root.subtree.select { |n| n.name == :word }.count, 'one word'
-    assert_equal 1, root.subtree.select { |n| n.name == :integer }.count, 'one integer'
+    assert_equal 1, root.subtree.count { |n| n.name == :word }, 'one word'
+    assert_equal 1, root.subtree.count { |n| n.name == :integer }, 'one integer'
   end
 
   class LeftAncestor
